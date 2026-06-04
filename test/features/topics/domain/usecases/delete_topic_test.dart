@@ -14,25 +14,39 @@ void main() {
       usecase = DeleteTopic(repository);
     });
 
-    test('deve excluir um tópico pelo id', () async {
+    test('should delete a topic by id', () async {
+      // Arrange
       final topic = makeTopic(id: 'topic-1');
       repository.topics.add(topic);
 
+      // Act
       await usecase(topic.id);
 
+      // Assert
       expect(repository.topics, isEmpty);
     });
 
-    test('deve chamar o repository com o id correto', () async {
-      await usecase('topic-1');
+    test('should call the repository with the correct id', () async {
+      // Arrange
+      const topicId = 'topic-1';
 
+      // Act
+      await usecase(topicId);
+
+      // Assert
       expect(repository.deleteTopicWasCalled, isTrue);
-      expect(repository.deletedId, 'topic-1');
+      expect(repository.deletedId, topicId);
     });
 
-    test('deve lançar erro se o id estiver vazio', () async {
+    test('should throw an error when the id is empty', () async {
+      // Arrange
+
+      // Act
+      Future<void> action() => usecase('');
+
+      // Assert
       expect(
-        () => usecase(''),
+        action,
         throwsA(
           isA<EmptyTopicIdException>().having(
             (error) => error.message,
@@ -43,9 +57,15 @@ void main() {
       );
     });
 
-    test('deve lançar erro se o id tiver apenas espaços', () async {
+    test('should throw an error when the id has only spaces', () async {
+      // Arrange
+
+      // Act
+      Future<void> action() => usecase('   ');
+
+      // Assert
       expect(
-        () => usecase('   '),
+        action,
         throwsA(
           isA<EmptyTopicIdException>().having(
             (error) => error.message,
@@ -62,7 +82,7 @@ Topic makeTopic({required String id}) {
   return Topic(
     id: id,
     subjectId: 'subject-1',
-    title: 'Concordância verbal',
+    title: 'Subject-verb agreement',
     status: TopicStatus.notStarted,
     priority: TopicPriority.medium,
     createdAt: DateTime(2026, 6),

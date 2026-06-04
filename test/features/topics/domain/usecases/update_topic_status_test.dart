@@ -14,23 +14,44 @@ void main() {
       usecase = UpdateTopicStatus(repository);
     });
 
-    test('deve atualizar o status de um tópico', () async {
-      await usecase('topic-1', TopicStatus.completed);
+    test('should update the status of a topic', () async {
+      // Arrange
+      const topicId = 'topic-1';
+      const status = TopicStatus.completed;
 
-      expect(repository.updatedStatus, TopicStatus.completed);
+      // Act
+      await usecase(topicId, status);
+
+      // Assert
+      expect(repository.updatedStatus, status);
     });
 
-    test('deve chamar o repository com topicId e status corretos', () async {
-      await usecase('topic-1', TopicStatus.review);
+    test(
+      'should call the repository with the correct topicId and status',
+      () async {
+        // Arrange
+        const topicId = 'topic-1';
+        const status = TopicStatus.review;
 
-      expect(repository.updateTopicStatusWasCalled, isTrue);
-      expect(repository.updatedTopicId, 'topic-1');
-      expect(repository.updatedStatus, TopicStatus.review);
-    });
+        // Act
+        await usecase(topicId, status);
 
-    test('deve lançar erro se topicId estiver vazio', () async {
+        // Assert
+        expect(repository.updateTopicStatusWasCalled, isTrue);
+        expect(repository.updatedTopicId, topicId);
+        expect(repository.updatedStatus, status);
+      },
+    );
+
+    test('should throw an error when topicId is empty', () async {
+      // Arrange
+
+      // Act
+      Future<void> action() => usecase('', TopicStatus.studying);
+
+      // Assert
       expect(
-        () => usecase('', TopicStatus.studying),
+        action,
         throwsA(
           isA<EmptyTopicIdException>().having(
             (error) => error.message,
@@ -41,9 +62,15 @@ void main() {
       );
     });
 
-    test('deve lançar erro se topicId tiver apenas espaços', () async {
+    test('should throw an error when topicId has only spaces', () async {
+      // Arrange
+
+      // Act
+      Future<void> action() => usecase('   ', TopicStatus.studying);
+
+      // Assert
       expect(
-        () => usecase('   ', TopicStatus.studying),
+        action,
         throwsA(
           isA<EmptyTopicIdException>().having(
             (error) => error.message,

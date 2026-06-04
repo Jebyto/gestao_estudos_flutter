@@ -15,40 +15,55 @@ void main() {
     });
 
     test(
-      'deve retornar lista vazia quando a matéria não tiver tópicos',
+      'should return an empty list when the subject has no topics',
       () async {
-        final topics = await usecase('subject-1');
+        // Arrange
+        const subjectId = 'subject-1';
 
+        // Act
+        final topics = await usecase(subjectId);
+
+        // Assert
         expect(topics, isEmpty);
       },
     );
 
-    test('deve retornar os tópicos de uma matéria', () async {
+    test('should return the topics from a subject', () async {
+      // Arrange
+      const subjectId = 'subject-1';
       final firstTopic = makeTopic(
         id: 'topic-1',
-        subjectId: 'subject-1',
-        title: 'Pronome relativo',
+        subjectId: subjectId,
+        title: 'Relative pronoun',
       );
       final secondTopic = makeTopic(
         id: 'topic-2',
-        subjectId: 'subject-1',
-        title: 'Orações subordinadas',
+        subjectId: subjectId,
+        title: 'Subordinate clauses',
       );
       final anotherSubjectTopic = makeTopic(
         id: 'topic-3',
         subjectId: 'subject-2',
-        title: 'Funções',
+        title: 'Functions',
       );
       repository.topics.addAll([firstTopic, secondTopic, anotherSubjectTopic]);
 
-      final topics = await usecase('subject-1');
+      // Act
+      final topics = await usecase(subjectId);
 
+      // Assert
       expect(topics, [firstTopic, secondTopic]);
     });
 
-    test('deve lançar erro se subjectId estiver vazio', () async {
+    test('should throw an error when subjectId is empty', () async {
+      // Arrange
+
+      // Act
+      Future<List<Topic>> action() => usecase('');
+
+      // Assert
       expect(
-        () => usecase(''),
+        action,
         throwsA(
           isA<EmptyTopicSubjectIdException>().having(
             (error) => error.message,
@@ -59,9 +74,15 @@ void main() {
       );
     });
 
-    test('deve lançar erro se subjectId tiver apenas espaços', () async {
+    test('should throw an error when subjectId has only spaces', () async {
+      // Arrange
+
+      // Act
+      Future<List<Topic>> action() => usecase('   ');
+
+      // Assert
       expect(
-        () => usecase('   '),
+        action,
         throwsA(
           isA<EmptyTopicSubjectIdException>().having(
             (error) => error.message,

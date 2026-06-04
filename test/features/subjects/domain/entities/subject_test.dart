@@ -6,66 +6,93 @@ void main() {
     final createdAt = DateTime(2026, 6);
     final updatedAt = DateTime(2026, 6, 1);
 
-    test('deve criar uma matéria válida', () {
+    test('should create a valid subject', () {
+      // Arrange
+      const name = 'Mathematics';
+      const description = 'Basic mathematics studies';
+
+      // Act
       final subject = Subject(
         id: 'subject-1',
-        name: 'Matemática',
-        description: 'Estudos de matemática básica',
+        name: name,
+        description: description,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );
 
+      // Assert
       expect(subject, isA<Subject>());
     });
 
-    test('deve manter os valores passados no construtor', () {
+    test('should keep the values passed to the constructor', () {
+      // Arrange
+      const name = 'Programming';
+      const description = 'Flutter and Dart';
+
+      // Act
       final subject = Subject(
         id: 'subject-1',
-        name: 'Programação',
-        description: 'Flutter e Dart',
+        name: name,
+        description: description,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );
 
+      // Assert
       expect(subject.id, 'subject-1');
-      expect(subject.name, 'Programação');
-      expect(subject.description, 'Flutter e Dart');
+      expect(subject.name, name);
+      expect(subject.description, description);
       expect(subject.createdAt, createdAt);
       expect(subject.updatedAt, updatedAt);
     });
 
-    test('deve aceitar descrição nula', () {
+    test('should accept a null description', () {
+      // Arrange
+      const name = 'English';
+
+      // Act
       final subject = Subject(
         id: 'subject-1',
-        name: 'Inglês',
+        name: name,
         createdAt: createdAt,
       );
 
+      // Assert
       expect(subject.description, isNull);
     });
 
-    test('deve aceitar updatedAt nulo', () {
+    test('should accept a null updatedAt', () {
+      // Arrange
+      const name = 'Database';
+
+      // Act
       final subject = Subject(
         id: 'subject-1',
-        name: 'Banco de Dados',
+        name: name,
         createdAt: createdAt,
       );
 
+      // Assert
       expect(subject.updatedAt, isNull);
     });
 
-    test('deve comparar matérias por valor', () {
+    test('should compare subjects by value', () {
+      // Arrange
+      const name = 'Computer Networks';
+
+      // Act
       final firstSubject = Subject(
         id: 'subject-1',
-        name: 'Redes de Computadores',
+        name: name,
         createdAt: createdAt,
       );
       final secondSubject = Subject(
         id: 'subject-1',
-        name: 'Redes de Computadores',
+        name: name,
         createdAt: createdAt,
       );
 
+      // Assert
       expect(firstSubject, secondSubject);
     });
   });

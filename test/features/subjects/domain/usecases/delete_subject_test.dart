@@ -14,25 +14,39 @@ void main() {
       usecase = DeleteSubject(repository);
     });
 
-    test('deve excluir uma matéria pelo id', () async {
-      final subject = makeSubject(id: 'subject-1', name: 'Matemática');
+    test('should delete a subject by id', () async {
+      // Arrange
+      final subject = makeSubject(id: 'subject-1', name: 'Mathematics');
       repository.subjects.add(subject);
 
+      // Act
       await usecase(subject.id);
 
+      // Assert
       expect(repository.subjects, isEmpty);
     });
 
-    test('deve chamar o repository com o id correto', () async {
-      await usecase('subject-1');
+    test('should call the repository with the correct id', () async {
+      // Arrange
+      const subjectId = 'subject-1';
 
+      // Act
+      await usecase(subjectId);
+
+      // Assert
       expect(repository.deleteSubjectWasCalled, isTrue);
-      expect(repository.deletedId, 'subject-1');
+      expect(repository.deletedId, subjectId);
     });
 
-    test('deve lançar erro se o id estiver vazio', () async {
+    test('should throw an error when the id is empty', () async {
+      // Arrange
+
+      // Act
+      Future<void> action() => usecase('');
+
+      // Assert
       expect(
-        () => usecase(''),
+        action,
         throwsA(
           isA<EmptySubjectIdException>().having(
             (error) => error.message,
@@ -43,9 +57,15 @@ void main() {
       );
     });
 
-    test('deve lançar erro se o id tiver apenas espaços', () async {
+    test('should throw an error when the id has only spaces', () async {
+      // Arrange
+
+      // Act
+      Future<void> action() => usecase('   ');
+
+      // Assert
       expect(
-        () => usecase('   '),
+        action,
         throwsA(
           isA<EmptySubjectIdException>().having(
             (error) => error.message,

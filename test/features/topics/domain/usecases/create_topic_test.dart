@@ -14,28 +14,39 @@ void main() {
       usecase = CreateTopic(repository);
     });
 
-    test('deve criar um tópico válido', () async {
-      final topic = makeTopic(title: 'Pronome relativo');
+    test('should create a valid topic', () async {
+      // Arrange
+      final topic = makeTopic(title: 'Relative pronoun');
 
+      // Act
       await usecase(topic);
 
+      // Assert
       expect(repository.topics, contains(topic));
     });
 
-    test('deve chamar o repository', () async {
-      final topic = makeTopic(title: 'Orações subordinadas');
+    test('should call the repository', () async {
+      // Arrange
+      final topic = makeTopic(title: 'Subordinate clauses');
 
+      // Act
       await usecase(topic);
 
+      // Assert
       expect(repository.createTopicWasCalled, isTrue);
       expect(repository.createdTopic, topic);
     });
 
-    test('deve lançar erro se subjectId estiver vazio', () async {
+    test('should throw an error when subjectId is empty', () async {
+      // Arrange
       final topic = makeTopic(subjectId: '');
 
+      // Act
+      Future<void> action() => usecase(topic);
+
+      // Assert
       expect(
-        () => usecase(topic),
+        action,
         throwsA(
           isA<EmptyTopicSubjectIdException>().having(
             (error) => error.message,
@@ -46,11 +57,16 @@ void main() {
       );
     });
 
-    test('deve lançar erro se subjectId tiver apenas espaços', () async {
+    test('should throw an error when subjectId has only spaces', () async {
+      // Arrange
       final topic = makeTopic(subjectId: '   ');
 
+      // Act
+      Future<void> action() => usecase(topic);
+
+      // Assert
       expect(
-        () => usecase(topic),
+        action,
         throwsA(
           isA<EmptyTopicSubjectIdException>().having(
             (error) => error.message,
@@ -61,11 +77,16 @@ void main() {
       );
     });
 
-    test('deve lançar erro se title estiver vazio', () async {
+    test('should throw an error when title is empty', () async {
+      // Arrange
       final topic = makeTopic(title: '');
 
+      // Act
+      Future<void> action() => usecase(topic);
+
+      // Assert
       expect(
-        () => usecase(topic),
+        action,
         throwsA(
           isA<EmptyTopicTitleException>().having(
             (error) => error.message,
@@ -76,11 +97,16 @@ void main() {
       );
     });
 
-    test('deve lançar erro se title tiver apenas espaços', () async {
+    test('should throw an error when title has only spaces', () async {
+      // Arrange
       final topic = makeTopic(title: '   ');
 
+      // Act
+      Future<void> action() => usecase(topic);
+
+      // Assert
       expect(
-        () => usecase(topic),
+        action,
         throwsA(
           isA<EmptyTopicTitleException>().having(
             (error) => error.message,
@@ -96,7 +122,7 @@ void main() {
 Topic makeTopic({
   String id = 'topic-1',
   String subjectId = 'subject-1',
-  String title = 'Regência verbal',
+  String title = 'Subject-verb agreement',
 }) {
   return Topic(
     id: id,

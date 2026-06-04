@@ -8,12 +8,17 @@ void main() {
     final completedAt = DateTime(2026, 6, 2);
     final nextReviewAt = DateTime(2026, 6, 9);
 
-    test('deve criar um tópico válido', () {
+    test('should create a valid topic', () {
+      // Arrange
+      const title = 'Relative pronoun';
+      const description = 'Grammar content';
+
+      // Act
       final topic = Topic(
         id: 'topic-1',
         subjectId: 'subject-1',
-        title: 'Pronome relativo',
-        description: 'Conteúdo de português',
+        title: title,
+        description: description,
         status: TopicStatus.notStarted,
         priority: TopicPriority.medium,
         createdAt: createdAt,
@@ -22,15 +27,21 @@ void main() {
         nextReviewAt: nextReviewAt,
       );
 
+      // Assert
       expect(topic, isA<Topic>());
     });
 
-    test('deve manter os valores passados no construtor', () {
+    test('should keep the values passed to the constructor', () {
+      // Arrange
+      const title = 'Subordinate clauses';
+      const description = 'Review clause classification';
+
+      // Act
       final topic = Topic(
         id: 'topic-1',
         subjectId: 'subject-1',
-        title: 'Orações subordinadas',
-        description: 'Revisar classificação das orações',
+        title: title,
+        description: description,
         status: TopicStatus.studying,
         priority: TopicPriority.high,
         createdAt: createdAt,
@@ -39,10 +50,11 @@ void main() {
         nextReviewAt: nextReviewAt,
       );
 
+      // Assert
       expect(topic.id, 'topic-1');
       expect(topic.subjectId, 'subject-1');
-      expect(topic.title, 'Orações subordinadas');
-      expect(topic.description, 'Revisar classificação das orações');
+      expect(topic.title, title);
+      expect(topic.description, description);
       expect(topic.status, TopicStatus.studying);
       expect(topic.priority, TopicPriority.high);
       expect(topic.createdAt, createdAt);
@@ -51,35 +63,58 @@ void main() {
       expect(topic.nextReviewAt, nextReviewAt);
     });
 
-    test('deve aceitar descrição nula', () {
+    test('should accept a null description', () {
+      // Arrange
       final topic = makeTopic(description: null);
 
-      expect(topic.description, isNull);
+      // Act
+      final description = topic.description;
+
+      // Assert
+      expect(description, isNull);
     });
 
-    test('deve aceitar updatedAt, completedAt e nextReviewAt nulos', () {
+    test('should accept null updatedAt, completedAt, and nextReviewAt', () {
+      // Arrange
       final topic = makeTopic(
         updatedAt: null,
         completedAt: null,
         nextReviewAt: null,
       );
 
-      expect(topic.updatedAt, isNull);
-      expect(topic.completedAt, isNull);
-      expect(topic.nextReviewAt, isNull);
+      // Act
+      final updatedAt = topic.updatedAt;
+      final completedAt = topic.completedAt;
+      final nextReviewAt = topic.nextReviewAt;
+
+      // Assert
+      expect(updatedAt, isNull);
+      expect(completedAt, isNull);
+      expect(nextReviewAt, isNull);
     });
 
-    test('deve pertencer a uma matéria via subjectId', () {
-      final topic = makeTopic(subjectId: 'subject-portugues');
+    test('should belong to a subject through subjectId', () {
+      // Arrange
+      const subjectId = 'subject-english';
+      final topic = makeTopic(subjectId: subjectId);
 
-      expect(topic.subjectId, 'subject-portugues');
+      // Act
+      final topicSubjectId = topic.subjectId;
+
+      // Assert
+      expect(topicSubjectId, subjectId);
     });
 
-    test('deve comparar tópicos por valor', () {
+    test('should compare topics by value', () {
+      // Arrange
       final firstTopic = makeTopic();
       final secondTopic = makeTopic();
 
-      expect(firstTopic, secondTopic);
+      // Act
+      final topicsAreEqual = firstTopic == secondTopic;
+
+      // Assert
+      expect(topicsAreEqual, isTrue);
     });
   });
 }
@@ -87,8 +122,8 @@ void main() {
 Topic makeTopic({
   String id = 'topic-1',
   String subjectId = 'subject-1',
-  String title = 'Concordância verbal',
-  String? description = 'Estudo de regras gerais',
+  String title = 'Subject-verb agreement',
+  String? description = 'Study general rules',
   TopicStatus status = TopicStatus.notStarted,
   TopicPriority priority = TopicPriority.medium,
   DateTime? createdAt,

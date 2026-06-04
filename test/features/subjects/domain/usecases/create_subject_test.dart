@@ -14,28 +14,39 @@ void main() {
       usecase = CreateSubject(repository);
     });
 
-    test('deve criar uma matéria válida', () async {
-      final subject = makeSubject(name: 'Matemática');
+    test('should create a valid subject', () async {
+      // Arrange
+      final subject = makeSubject(name: 'Mathematics');
 
+      // Act
       await usecase(subject);
 
+      // Assert
       expect(repository.subjects, contains(subject));
     });
 
-    test('deve chamar o repository', () async {
-      final subject = makeSubject(name: 'Português');
+    test('should call the repository', () async {
+      // Arrange
+      final subject = makeSubject(name: 'Portuguese');
 
+      // Act
       await usecase(subject);
 
+      // Assert
       expect(repository.createSubjectWasCalled, isTrue);
       expect(repository.createdSubject, subject);
     });
 
-    test('deve lançar erro se o nome estiver vazio', () async {
+    test('should throw an error when the name is empty', () async {
+      // Arrange
       final subject = makeSubject(name: '');
 
+      // Act
+      Future<void> action() => usecase(subject);
+
+      // Assert
       expect(
-        () => usecase(subject),
+        action,
         throwsA(
           isA<EmptySubjectNameException>().having(
             (error) => error.message,
@@ -46,11 +57,16 @@ void main() {
       );
     });
 
-    test('deve lançar erro se o nome tiver apenas espaços', () async {
+    test('should throw an error when the name has only spaces', () async {
+      // Arrange
       final subject = makeSubject(name: '   ');
 
+      // Act
+      Future<void> action() => usecase(subject);
+
+      // Assert
       expect(
-        () => usecase(subject),
+        action,
         throwsA(
           isA<EmptySubjectNameException>().having(
             (error) => error.message,
