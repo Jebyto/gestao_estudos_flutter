@@ -1,3 +1,4 @@
+import '../errors/topic_exceptions.dart';
 import '../repositories/topic_repository.dart';
 
 class DeleteTopic {
@@ -7,7 +8,7 @@ class DeleteTopic {
 
   Future<void> call(String id) async {
     if (id.trim().isEmpty) {
-      throw ArgumentError('O id do tópico é obrigatório.');
+      throw const EmptyTopicIdException();
     }
 
     await repository.deleteTopic(id);

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/entities/subject.dart';
+import 'package:gestao_estudos_flutter/features/subjects/domain/errors/subject_exceptions.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/repositories/subject_repository.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/delete_subject.dart';
 
@@ -33,10 +34,10 @@ void main() {
       expect(
         () => usecase(''),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<EmptySubjectIdException>().having(
             (error) => error.message,
             'message',
-            'O id da matéria é obrigatório.',
+            'Subject id is required.',
           ),
         ),
       );
@@ -46,10 +47,10 @@ void main() {
       expect(
         () => usecase('   '),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<EmptySubjectIdException>().having(
             (error) => error.message,
             'message',
-            'O id da matéria é obrigatório.',
+            'Subject id is required.',
           ),
         ),
       );

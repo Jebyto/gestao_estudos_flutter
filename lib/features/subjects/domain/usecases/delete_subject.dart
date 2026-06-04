@@ -1,3 +1,4 @@
+import '../errors/subject_exceptions.dart';
 import '../repositories/subject_repository.dart';
 
 class DeleteSubject {
@@ -7,7 +8,7 @@ class DeleteSubject {
 
   Future<void> call(String id) async {
     if (id.trim().isEmpty) {
-      throw ArgumentError('O id da matéria é obrigatório.');
+      throw const EmptySubjectIdException();
     }
 
     await repository.deleteSubject(id);

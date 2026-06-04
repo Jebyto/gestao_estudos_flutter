@@ -1,4 +1,5 @@
 import '../entities/topic.dart';
+import '../errors/topic_exceptions.dart';
 import '../repositories/topic_repository.dart';
 
 class GetTopicsBySubject {
@@ -8,7 +9,7 @@ class GetTopicsBySubject {
 
   Future<List<Topic>> call(String subjectId) async {
     if (subjectId.trim().isEmpty) {
-      throw ArgumentError('O id da matéria é obrigatório.');
+      throw const EmptyTopicSubjectIdException();
     }
 
     return repository.getTopicsBySubject(subjectId);

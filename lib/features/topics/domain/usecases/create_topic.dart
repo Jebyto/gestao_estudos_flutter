@@ -1,4 +1,5 @@
 import '../entities/topic.dart';
+import '../errors/topic_exceptions.dart';
 import '../repositories/topic_repository.dart';
 
 class CreateTopic {
@@ -8,11 +9,11 @@ class CreateTopic {
 
   Future<void> call(Topic topic) async {
     if (topic.subjectId.trim().isEmpty) {
-      throw ArgumentError('O id da matéria é obrigatório.');
+      throw const EmptyTopicSubjectIdException();
     }
 
     if (topic.title.trim().isEmpty) {
-      throw ArgumentError('O título do tópico é obrigatório.');
+      throw const EmptyTopicTitleException();
     }
 
     await repository.createTopic(topic);

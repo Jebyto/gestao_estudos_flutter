@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gestao_estudos_flutter/features/topics/domain/entities/topic.dart';
+import 'package:gestao_estudos_flutter/features/topics/domain/errors/topic_exceptions.dart';
 import 'package:gestao_estudos_flutter/features/topics/domain/repositories/topic_repository.dart';
 import 'package:gestao_estudos_flutter/features/topics/domain/usecases/create_topic.dart';
 
@@ -36,10 +37,10 @@ void main() {
       expect(
         () => usecase(topic),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<EmptyTopicSubjectIdException>().having(
             (error) => error.message,
             'message',
-            'O id da matéria é obrigatório.',
+            'Subject id is required.',
           ),
         ),
       );
@@ -51,10 +52,10 @@ void main() {
       expect(
         () => usecase(topic),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<EmptyTopicSubjectIdException>().having(
             (error) => error.message,
             'message',
-            'O id da matéria é obrigatório.',
+            'Subject id is required.',
           ),
         ),
       );
@@ -66,10 +67,10 @@ void main() {
       expect(
         () => usecase(topic),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<EmptyTopicTitleException>().having(
             (error) => error.message,
             'message',
-            'O título do tópico é obrigatório.',
+            'Topic title is required.',
           ),
         ),
       );
@@ -81,10 +82,10 @@ void main() {
       expect(
         () => usecase(topic),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<EmptyTopicTitleException>().having(
             (error) => error.message,
             'message',
-            'O título do tópico é obrigatório.',
+            'Topic title is required.',
           ),
         ),
       );

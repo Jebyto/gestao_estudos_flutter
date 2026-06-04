@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/entities/subject.dart';
+import 'package:gestao_estudos_flutter/features/subjects/domain/errors/subject_exceptions.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/repositories/subject_repository.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/create_subject.dart';
 
@@ -36,10 +37,10 @@ void main() {
       expect(
         () => usecase(subject),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<EmptySubjectNameException>().having(
             (error) => error.message,
             'message',
-            'O nome da matéria é obrigatório.',
+            'Subject name is required.',
           ),
         ),
       );
@@ -51,10 +52,10 @@ void main() {
       expect(
         () => usecase(subject),
         throwsA(
-          isA<ArgumentError>().having(
+          isA<EmptySubjectNameException>().having(
             (error) => error.message,
             'message',
-            'O nome da matéria é obrigatório.',
+            'Subject name is required.',
           ),
         ),
       );

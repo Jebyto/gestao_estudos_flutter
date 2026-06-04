@@ -1,4 +1,5 @@
 import '../entities/topic.dart';
+import '../errors/topic_exceptions.dart';
 import '../repositories/topic_repository.dart';
 
 class UpdateTopicStatus {
@@ -8,7 +9,7 @@ class UpdateTopicStatus {
 
   Future<void> call(String topicId, TopicStatus status) async {
     if (topicId.trim().isEmpty) {
-      throw ArgumentError('O id do tópico é obrigatório.');
+      throw const EmptyTopicIdException();
     }
 
     await repository.updateTopicStatus(topicId, status);
