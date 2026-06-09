@@ -1,3 +1,5 @@
+import '../../../reviews/domain/entities/review.dart';
+import '../../../reviews/domain/repositories/review_repository.dart';
 import '../../../study_sessions/domain/entities/study_session.dart';
 import '../../../study_sessions/domain/repositories/study_session_repository.dart';
 import '../../../subjects/domain/entities/subject.dart';
@@ -12,12 +14,14 @@ class GetDashboardSummary {
   final SubjectRepository subjectRepository;
   final TopicRepository topicRepository;
   final StudySessionRepository studySessionRepository;
+  final ReviewRepository reviewRepository;
   final DateTimeProvider now;
 
   GetDashboardSummary({
     required this.subjectRepository,
     required this.topicRepository,
     required this.studySessionRepository,
+    required this.reviewRepository,
     DateTimeProvider? now,
   }) : now = now ?? DateTime.now;
 
@@ -25,6 +29,7 @@ class GetDashboardSummary {
     final subjects = await subjectRepository.getSubjects();
     final topics = await _getTopics(subjects);
     final studySessions = await studySessionRepository.getStudySessions();
+    final reviews = await reviewRepository.getReviews();
 
     final completedTopics = _countTopicsByStatus(
       topics: topics,
@@ -37,6 +42,11 @@ class GetDashboardSummary {
     final mostStudiedSubject = _getMostStudiedSubject(
       subjects: subjects,
       studySessions: studySessions,
+    );
+    final nextReview = _getNextReview(
+      reviews: reviews,
+      topics: topics,
+      subjects: subjects,
     );
 
     return DashboardSummary(
@@ -54,6 +64,14 @@ class GetDashboardSummary {
       mostStudiedSubjectId: mostStudiedSubject?.subject.id,
       mostStudiedSubjectName: mostStudiedSubject?.subject.name,
       mostStudiedSubjectMinutes: mostStudiedSubject?.minutes ?? 0,
+      reviewsDueToday: _countReviewsDueToday(reviews),
+      overdueReviews: _countOverdueReviews(reviews),
+      completedReviewsThisWeek: _countCompletedReviewsThisWeek(reviews),
+      nextReviewId: nextReview?.review.id,
+      nextReviewTopicId: nextReview?.review.topicId,
+      nextReviewTopicTitle: nextReview?.topic?.title,
+      nextReviewSubjectName: nextReview?.subject?.name,
+      nextReviewScheduledFor: nextReview?.review.scheduledFor,
     );
   }
 
@@ -149,6 +167,76 @@ class GetDashboardSummary {
     return mostStudiedSubject;
   }
 
+  int _countReviewsDueToday(List<Review> reviews) {
+    final currentDate = now();
+
+    return reviews.where((review) {
+      return review.isPending && _isSameDay(review.scheduledFor, currentDate);
+    }).length;
+  }
+
+  int _countOverdueReviews(List<Review> reviews) {
+    final startOfToday = _dateOnly(now());
+
+    return reviews.where((review) {
+      return review.isPending && review.scheduledFor.isBefore(startOfToday);
+    }).length;
+  }
+
+  int _countCompletedReviewsThisWeek(List<Review> reviews) {
+    final currentDate = now();
+    final startOfWeek = _startOfWeek(currentDate);
+    final startOfNextWeek = startOfWeek.add(const Duration(days: 7));
+
+    return reviews.where((review) {
+      final reviewedAt = review.reviewedAt;
+
+      return reviewedAt != null &&
+          !reviewedAt.isBefore(startOfWeek) &&
+          reviewedAt.isBefore(startOfNextWeek);
+    }).length;
+  }
+
+  _NextReview? _getNextReview({
+    required List<Review> reviews,
+    required List<Topic> topics,
+    required List<Subject> subjects,
+  }) {
+    final pendingReviews = reviews.where((review) => review.isPending).toList()
+      ..sort((firstReview, secondReview) {
+        return firstReview.scheduledFor.compareTo(secondReview.scheduledFor);
+      });
+
+    if (pendingReviews.isEmpty) return null;
+
+    final review = pendingReviews.first;
+    final topic = _getTopicById(topics: topics, topicId: review.topicId);
+    final subject = topic == null
+        ? null
+        : _getSubjectById(subjects: subjects, subjectId: topic.subjectId);
+
+    return _NextReview(review: review, topic: topic, subject: subject);
+  }
+
+  Topic? _getTopicById({required List<Topic> topics, required String topicId}) {
+    for (final topic in topics) {
+      if (topic.id == topicId) return topic;
+    }
+
+    return null;
+  }
+
+  Subject? _getSubjectById({
+    required List<Subject> subjects,
+    required String subjectId,
+  }) {
+    for (final subject in subjects) {
+      if (subject.id == subjectId) return subject;
+    }
+
+    return null;
+  }
+
   bool _isSameDay(DateTime firstDate, DateTime secondDate) {
     return firstDate.year == secondDate.year &&
         firstDate.month == secondDate.month &&
@@ -156,9 +244,13 @@ class GetDashboardSummary {
   }
 
   DateTime _startOfWeek(DateTime date) {
-    final dateOnly = DateTime(date.year, date.month, date.day);
+    final dateOnly = _dateOnly(date);
 
     return dateOnly.subtract(Duration(days: date.weekday - DateTime.monday));
+  }
+
+  DateTime _dateOnly(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
   }
 }
 
@@ -167,4 +259,16 @@ class _MostStudiedSubject {
   final int minutes;
 
   const _MostStudiedSubject({required this.subject, required this.minutes});
+}
+
+class _NextReview {
+  final Review review;
+  final Topic? topic;
+  final Subject? subject;
+
+  const _NextReview({
+    required this.review,
+    required this.topic,
+    required this.subject,
+  });
 }

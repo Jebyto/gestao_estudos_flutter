@@ -10,6 +10,14 @@ class DashboardSummary {
   final String? mostStudiedSubjectId;
   final String? mostStudiedSubjectName;
   final int mostStudiedSubjectMinutes;
+  final int reviewsDueToday;
+  final int overdueReviews;
+  final int completedReviewsThisWeek;
+  final String? nextReviewId;
+  final String? nextReviewTopicId;
+  final String? nextReviewTopicTitle;
+  final String? nextReviewSubjectName;
+  final DateTime? nextReviewScheduledFor;
 
   const DashboardSummary({
     required this.totalSubjects,
@@ -23,6 +31,14 @@ class DashboardSummary {
     this.mostStudiedSubjectId,
     this.mostStudiedSubjectName,
     required this.mostStudiedSubjectMinutes,
+    required this.reviewsDueToday,
+    required this.overdueReviews,
+    required this.completedReviewsThisWeek,
+    this.nextReviewId,
+    this.nextReviewTopicId,
+    this.nextReviewTopicTitle,
+    this.nextReviewSubjectName,
+    this.nextReviewScheduledFor,
   });
 
   @override
@@ -39,12 +55,20 @@ class DashboardSummary {
             other.progressPercentage == progressPercentage &&
             other.mostStudiedSubjectId == mostStudiedSubjectId &&
             other.mostStudiedSubjectName == mostStudiedSubjectName &&
-            other.mostStudiedSubjectMinutes == mostStudiedSubjectMinutes;
+            other.mostStudiedSubjectMinutes == mostStudiedSubjectMinutes &&
+            other.reviewsDueToday == reviewsDueToday &&
+            other.overdueReviews == overdueReviews &&
+            other.completedReviewsThisWeek == completedReviewsThisWeek &&
+            other.nextReviewId == nextReviewId &&
+            other.nextReviewTopicId == nextReviewTopicId &&
+            other.nextReviewTopicTitle == nextReviewTopicTitle &&
+            other.nextReviewSubjectName == nextReviewSubjectName &&
+            other.nextReviewScheduledFor == nextReviewScheduledFor;
   }
 
   @override
   int get hashCode {
-    return Object.hash(
+    return Object.hashAll([
       totalSubjects,
       totalTopics,
       completedTopics,
@@ -56,6 +80,14 @@ class DashboardSummary {
       mostStudiedSubjectId,
       mostStudiedSubjectName,
       mostStudiedSubjectMinutes,
-    );
+      reviewsDueToday,
+      overdueReviews,
+      completedReviewsThisWeek,
+      nextReviewId,
+      nextReviewTopicId,
+      nextReviewTopicTitle,
+      nextReviewSubjectName,
+      nextReviewScheduledFor,
+    ]);
   }
 }

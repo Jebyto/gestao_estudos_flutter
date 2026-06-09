@@ -5,7 +5,7 @@ void main() {
   group('DashboardSummary', () {
     test('should support value equality', () {
       // Arrange
-      const firstSummary = DashboardSummary(
+      final firstSummary = DashboardSummary(
         totalSubjects: 2,
         totalTopics: 4,
         completedTopics: 2,
@@ -17,8 +17,16 @@ void main() {
         mostStudiedSubjectId: 'subject-1',
         mostStudiedSubjectName: 'Programming',
         mostStudiedSubjectMinutes: 120,
+        reviewsDueToday: 3,
+        overdueReviews: 1,
+        completedReviewsThisWeek: 4,
+        nextReviewId: 'review-1',
+        nextReviewTopicId: 'topic-1',
+        nextReviewTopicTitle: 'Use cases',
+        nextReviewSubjectName: 'Programming',
+        nextReviewScheduledFor: DateTime(2026, 6, 5),
       );
-      const secondSummary = DashboardSummary(
+      final secondSummary = DashboardSummary(
         totalSubjects: 2,
         totalTopics: 4,
         completedTopics: 2,
@@ -30,6 +38,14 @@ void main() {
         mostStudiedSubjectId: 'subject-1',
         mostStudiedSubjectName: 'Programming',
         mostStudiedSubjectMinutes: 120,
+        reviewsDueToday: 3,
+        overdueReviews: 1,
+        completedReviewsThisWeek: 4,
+        nextReviewId: 'review-1',
+        nextReviewTopicId: 'topic-1',
+        nextReviewTopicTitle: 'Use cases',
+        nextReviewSubjectName: 'Programming',
+        nextReviewScheduledFor: DateTime(2026, 6, 5),
       );
 
       // Act
