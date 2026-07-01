@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entities/subject.dart';
-import '../cubit/subjects_cubit.dart';
-import '../cubit/subjects_state.dart';
-import '../widgets/subject_card.dart';
-import 'subject_form_page.dart';
+import '../../../subjects/domain/entities/subject.dart';
+import '../../domain/entities/topic.dart';
+import '../cubit/topics_cubit.dart';
+import '../cubit/topics_state.dart';
+import '../widgets/topic_card.dart';
+import 'topic_form_page.dart';
 
-typedef SubjectSelectedCallback =
-    void Function(BuildContext context, Subject subject);
+class TopicsPage extends StatelessWidget {
+  final Subject subject;
 
-class SubjectsPage extends StatelessWidget {
-  final SubjectSelectedCallback? onSubjectSelected;
-
-  const SubjectsPage({super.key, this.onSubjectSelected});
+  const TopicsPage({super.key, required this.subject});
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<SubjectsCubit, SubjectsState>(
+    return BlocConsumer<TopicsCubit, TopicsState>(
       listenWhen: (previous, current) {
         return previous.errorMessage != current.errorMessage &&
             current.errorMessage != null;
@@ -30,25 +28,20 @@ class SubjectsPage extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Matérias'),
+            title: Text(subject.name),
             actions: [
               IconButton(
-                tooltip: 'Atualizar matérias',
+                tooltip: 'Atualizar tópicos',
                 onPressed: state.isLoading
                     ? null
-                    : () => context.read<SubjectsCubit>().loadSubjects(),
+                    : () => context.read<TopicsCubit>().loadTopics(),
                 icon: const Icon(Icons.refresh),
               ),
             ],
           ),
-          body: SafeArea(
-            child: _SubjectsBody(
-              state: state,
-              onSubjectSelected: onSubjectSelected,
-            ),
-          ),
+          body: SafeArea(child: _TopicsBody(state: state)),
           floatingActionButton: FloatingActionButton(
-            tooltip: 'Adicionar matéria',
+            tooltip: 'Adicionar tópico',
             onPressed: () => _openForm(context),
             child: const Icon(Icons.add),
           ),
@@ -58,63 +51,60 @@ class SubjectsPage extends StatelessWidget {
   }
 
   Future<void> _openForm(BuildContext context) {
-    final cubit = context.read<SubjectsCubit>();
+    final cubit = context.read<TopicsCubit>();
 
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) =>
-            BlocProvider.value(value: cubit, child: const SubjectFormPage()),
+            BlocProvider.value(value: cubit, child: const TopicFormPage()),
       ),
     );
   }
 }
 
-class _SubjectsBody extends StatelessWidget {
-  final SubjectsState state;
-  final SubjectSelectedCallback? onSubjectSelected;
+class _TopicsBody extends StatelessWidget {
+  final TopicsState state;
 
-  const _SubjectsBody({required this.state, required this.onSubjectSelected});
+  const _TopicsBody({required this.state});
 
   @override
   Widget build(BuildContext context) {
-    if (state.isLoading && state.subjects.isEmpty) {
+    if (state.isLoading && state.topics.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (state.subjects.isEmpty) {
-      return const _EmptySubjectsView();
+    if (state.topics.isEmpty) {
+      return const _EmptyTopicsView();
     }
 
     return RefreshIndicator(
-      onRefresh: () => context.read<SubjectsCubit>().loadSubjects(),
+      onRefresh: () => context.read<TopicsCubit>().loadTopics(),
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-        itemCount: state.subjects.length,
+        itemCount: state.topics.length,
         separatorBuilder: (_, _) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
-          final subject = state.subjects[index];
+          final topic = state.topics[index];
 
-          return SubjectCard(
-            subject: subject,
-            onTap: onSubjectSelected == null
-                ? null
-                : () => onSubjectSelected!(context, subject),
-            onDelete: () => _confirmDelete(context, subject.id),
+          return TopicCard(
+            topic: topic,
+            onStatusChanged: (status) => context
+                .read<TopicsCubit>()
+                .updateStatus(topicId: topic.id, status: status),
+            onDelete: () => _confirmDelete(context, topic),
           );
         },
       ),
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, String subjectId) async {
+  Future<void> _confirmDelete(BuildContext context, Topic topic) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Excluir matéria?'),
-          content: const Text(
-            'Os tópicos e registros vinculados também serão afetados.',
-          ),
+          title: const Text('Excluir tópico?'),
+          content: Text('O tópico "${topic.title}" será removido.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -132,12 +122,12 @@ class _SubjectsBody extends StatelessWidget {
 
     if (shouldDelete != true || !context.mounted) return;
 
-    await context.read<SubjectsCubit>().deleteSubject(subjectId);
+    await context.read<TopicsCubit>().deleteTopic(topic.id);
   }
 }
 
-class _EmptySubjectsView extends StatelessWidget {
-  const _EmptySubjectsView();
+class _EmptyTopicsView extends StatelessWidget {
+  const _EmptyTopicsView();
 
   @override
   Widget build(BuildContext context) {
@@ -148,19 +138,19 @@ class _EmptySubjectsView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.menu_book_outlined,
+              Icons.topic_outlined,
               size: 56,
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 12),
             Text(
-              'Nenhuma matéria cadastrada',
+              'Nenhum tópico cadastrado',
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
-              'Adicione sua primeira matéria para organizar seus tópicos e estudos.',
+              'Adicione conteúdos para acompanhar o progresso desta matéria.',
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

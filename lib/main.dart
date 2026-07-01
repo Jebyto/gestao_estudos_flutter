@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/di/app_dependencies.dart';
+import 'features/subjects/domain/entities/subject.dart';
 import 'features/subjects/presentation/cubit/subjects_cubit.dart';
 import 'features/subjects/presentation/pages/subjects_page.dart';
+import 'features/topics/presentation/cubit/topics_cubit.dart';
+import 'features/topics/presentation/pages/topics_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +36,26 @@ class StudyFlowApp extends StatelessWidget {
           createSubjectUseCase: dependencies.createSubject,
           deleteSubjectUseCase: dependencies.deleteSubject,
         )..loadSubjects(),
-        child: const SubjectsPage(),
+        child: SubjectsPage(onSubjectSelected: _openTopics),
+      ),
+    );
+  }
+
+  void _openTopics(BuildContext context, Subject subject) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return BlocProvider(
+            create: (_) => TopicsCubit(
+              subjectId: subject.id,
+              getTopicsBySubject: dependencies.getTopicsBySubject,
+              createTopicUseCase: dependencies.createTopic,
+              updateTopicStatusUseCase: dependencies.updateTopicStatus,
+              deleteTopicUseCase: dependencies.deleteTopic,
+            )..loadTopics(),
+            child: TopicsPage(subject: subject),
+          );
+        },
       ),
     );
   }

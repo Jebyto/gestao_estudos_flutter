@@ -4,9 +4,15 @@ import '../../domain/entities/subject.dart';
 
 class SubjectCard extends StatelessWidget {
   final Subject subject;
+  final VoidCallback? onTap;
   final VoidCallback onDelete;
 
-  const SubjectCard({super.key, required this.subject, required this.onDelete});
+  const SubjectCard({
+    super.key,
+    required this.subject,
+    this.onTap,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,50 +20,57 @@ class SubjectCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-              child: Text(_initialsFrom(subject.name)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    subject.name,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (description != null && description.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                foregroundColor: Theme.of(
+                  context,
+                ).colorScheme.onPrimaryContainer,
+                child: Text(_initialsFrom(subject.name)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      maxLines: 3,
+                      subject.name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (description != null && description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        description,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: 'Excluir matéria',
-              onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline),
-            ),
-          ],
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'Excluir matéria',
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline),
+              ),
+              if (onTap != null) const Icon(Icons.chevron_right),
+            ],
+          ),
         ),
       ),
     );

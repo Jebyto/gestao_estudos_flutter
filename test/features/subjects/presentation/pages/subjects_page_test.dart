@@ -55,6 +55,34 @@ void main() {
     expect(find.text('Modelagem relacional'), findsOneWidget);
   });
 
+  testWidgets('deve chamar callback ao tocar em uma matéria', (tester) async {
+    Subject? selectedSubject;
+    final subject = Subject(
+      id: 'subject-1',
+      name: 'Banco de Dados',
+      createdAt: today,
+    );
+    repository.subjects.add(subject);
+
+    await cubit.loadSubjects();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider.value(
+          value: cubit,
+          child: SubjectsPage(
+            onSubjectSelected: (_, subject) {
+              selectedSubject = subject;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Banco de Dados'));
+    await tester.pump();
+
+    expect(selectedSubject, subject);
+  });
+
   testWidgets('deve criar matéria pelo formulário', (tester) async {
     await cubit.loadSubjects();
     await tester.pumpSubjectsPage(cubit);
