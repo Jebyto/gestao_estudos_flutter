@@ -2,28 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../subjects/domain/entities/subject.dart';
-import '../../domain/entities/topic.dart';
-import '../cubit/topics_cubit.dart';
-import '../cubit/topics_state.dart';
-import '../widgets/topic_card.dart';
-import 'topic_form_page.dart';
+import '../../../topics/domain/entities/topic.dart';
+import '../../domain/entities/study_session.dart';
+import '../cubit/study_sessions_cubit.dart';
+import '../cubit/study_sessions_state.dart';
+import '../widgets/study_session_card.dart';
+import 'study_session_form_page.dart';
 
-typedef StudySessionsSelectedCallback =
-    void Function(BuildContext context, Subject subject, List<Topic> topics);
-
-class TopicsPage extends StatelessWidget {
+class StudySessionsPage extends StatelessWidget {
   final Subject subject;
-  final StudySessionsSelectedCallback? onStudySessionsSelected;
+  final List<Topic> topics;
 
-  const TopicsPage({
+  const StudySessionsPage({
     super.key,
     required this.subject,
-    this.onStudySessionsSelected,
+    required this.topics,
   });
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<TopicsCubit, TopicsState>(
+    return BlocConsumer<StudySessionsCubit, StudySessionsState>(
       listenWhen: (previous, current) {
         return previous.errorMessage != current.errorMessage &&
             current.errorMessage != null;
@@ -36,30 +34,24 @@ class TopicsPage extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(subject.name),
+            title: Text('Sessões - ${subject.name}'),
             actions: [
-              if (onStudySessionsSelected != null)
-                IconButton(
-                  tooltip: 'Sessões de estudo',
-                  onPressed: () => onStudySessionsSelected!(
-                    context,
-                    subject,
-                    context.read<TopicsCubit>().state.topics,
-                  ),
-                  icon: const Icon(Icons.timer_outlined),
-                ),
               IconButton(
-                tooltip: 'Atualizar tópicos',
+                tooltip: 'Atualizar sessões',
                 onPressed: state.isLoading
                     ? null
-                    : () => context.read<TopicsCubit>().loadTopics(),
+                    : () => context
+                          .read<StudySessionsCubit>()
+                          .loadStudySessions(),
                 icon: const Icon(Icons.refresh),
               ),
             ],
           ),
-          body: SafeArea(child: _TopicsBody(state: state)),
+          body: SafeArea(
+            child: _StudySessionsBody(state: state, topics: topics),
+          ),
           floatingActionButton: FloatingActionButton(
-            tooltip: 'Adicionar tópico',
+            tooltip: 'Adicionar sessão',
             onPressed: () => _openForm(context),
             child: const Icon(Icons.add),
           ),
@@ -69,60 +61,76 @@ class TopicsPage extends StatelessWidget {
   }
 
   Future<void> _openForm(BuildContext context) {
-    final cubit = context.read<TopicsCubit>();
+    final cubit = context.read<StudySessionsCubit>();
 
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            BlocProvider.value(value: cubit, child: const TopicFormPage()),
+        builder: (_) => BlocProvider.value(
+          value: cubit,
+          child: StudySessionFormPage(topics: topics),
+        ),
       ),
     );
   }
 }
 
-class _TopicsBody extends StatelessWidget {
-  final TopicsState state;
+class _StudySessionsBody extends StatelessWidget {
+  final StudySessionsState state;
+  final List<Topic> topics;
 
-  const _TopicsBody({required this.state});
+  const _StudySessionsBody({required this.state, required this.topics});
 
   @override
   Widget build(BuildContext context) {
-    if (state.isLoading && state.topics.isEmpty) {
+    if (state.isLoading && state.studySessions.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (state.topics.isEmpty) {
-      return const _EmptyTopicsView();
+    if (state.studySessions.isEmpty) {
+      return const _EmptyStudySessionsView();
     }
 
     return RefreshIndicator(
-      onRefresh: () => context.read<TopicsCubit>().loadTopics(),
+      onRefresh: () => context.read<StudySessionsCubit>().loadStudySessions(),
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-        itemCount: state.topics.length,
+        itemCount: state.studySessions.length,
         separatorBuilder: (_, _) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
-          final topic = state.topics[index];
+          final studySession = state.studySessions[index];
 
-          return TopicCard(
-            topic: topic,
-            onStatusChanged: (status) => context
-                .read<TopicsCubit>()
-                .updateStatus(topicId: topic.id, status: status),
-            onDelete: () => _confirmDelete(context, topic),
+          return StudySessionCard(
+            studySession: studySession,
+            topic: _topicForStudySession(studySession),
+            onDelete: () => _confirmDelete(context, studySession),
           );
         },
       ),
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, Topic topic) async {
+  Topic? _topicForStudySession(StudySession studySession) {
+    final topicId = studySession.topicId;
+
+    if (topicId == null) return null;
+
+    for (final topic in topics) {
+      if (topic.id == topicId) return topic;
+    }
+
+    return null;
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    StudySession studySession,
+  ) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Excluir tópico?'),
-          content: Text('O tópico "${topic.title}" será removido.'),
+          title: const Text('Excluir sessão?'),
+          content: const Text('O registro de estudo será removido.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -140,12 +148,14 @@ class _TopicsBody extends StatelessWidget {
 
     if (shouldDelete != true || !context.mounted) return;
 
-    await context.read<TopicsCubit>().deleteTopic(topic.id);
+    await context.read<StudySessionsCubit>().deleteStudySession(
+      studySession.id,
+    );
   }
 }
 
-class _EmptyTopicsView extends StatelessWidget {
-  const _EmptyTopicsView();
+class _EmptyStudySessionsView extends StatelessWidget {
+  const _EmptyStudySessionsView();
 
   @override
   Widget build(BuildContext context) {
@@ -156,19 +166,19 @@ class _EmptyTopicsView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.topic_outlined,
+              Icons.timer_outlined,
               size: 56,
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 12),
             Text(
-              'Nenhum tópico cadastrado',
+              'Nenhuma sessão registrada',
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
-              'Adicione conteúdos para acompanhar o progresso desta matéria.',
+              'Registre tempo de estudo para acompanhar seu progresso.',
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

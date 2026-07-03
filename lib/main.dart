@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/di/app_dependencies.dart';
+import 'features/study_sessions/presentation/cubit/study_sessions_cubit.dart';
+import 'features/study_sessions/presentation/pages/study_sessions_page.dart';
 import 'features/subjects/domain/entities/subject.dart';
 import 'features/subjects/presentation/cubit/subjects_cubit.dart';
 import 'features/subjects/presentation/pages/subjects_page.dart';
+import 'features/topics/domain/entities/topic.dart';
 import 'features/topics/presentation/cubit/topics_cubit.dart';
 import 'features/topics/presentation/pages/topics_page.dart';
 
@@ -53,7 +56,32 @@ class StudyFlowApp extends StatelessWidget {
               updateTopicStatusUseCase: dependencies.updateTopicStatus,
               deleteTopicUseCase: dependencies.deleteTopic,
             )..loadTopics(),
-            child: TopicsPage(subject: subject),
+            child: TopicsPage(
+              subject: subject,
+              onStudySessionsSelected: _openStudySessions,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openStudySessions(
+    BuildContext context,
+    Subject subject,
+    List<Topic> topics,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return BlocProvider(
+            create: (_) => StudySessionsCubit(
+              subjectId: subject.id,
+              getStudySessionsBySubject: dependencies.getStudySessionsBySubject,
+              createStudySessionUseCase: dependencies.createStudySession,
+              deleteStudySessionUseCase: dependencies.deleteStudySession,
+            )..loadStudySessions(),
+            child: StudySessionsPage(subject: subject, topics: topics),
           );
         },
       ),

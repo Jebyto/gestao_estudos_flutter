@@ -121,6 +121,43 @@ void main() {
     expect(repository.topics.first.status, TopicStatus.completed);
     expect(find.text('Concluído'), findsOneWidget);
   });
+
+  testWidgets('deve chamar callback para abrir sessões de estudo', (
+    tester,
+  ) async {
+    Subject? selectedSubject;
+    List<Topic>? selectedTopics;
+    final topic = Topic(
+      id: 'topic-1',
+      subjectId: subject.id,
+      title: 'Normalização',
+      status: TopicStatus.notStarted,
+      priority: TopicPriority.medium,
+      createdAt: today,
+    );
+    repository.topics.add(topic);
+
+    await cubit.loadTopics();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider.value(
+          value: cubit,
+          child: TopicsPage(
+            subject: subject,
+            onStudySessionsSelected: (_, subject, topics) {
+              selectedSubject = subject;
+              selectedTopics = topics;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byTooltip('Sessões de estudo'));
+    await tester.pump();
+
+    expect(selectedSubject, subject);
+    expect(selectedTopics, [topic]);
+  });
 }
 
 extension on WidgetTester {
