@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/di/app_dependencies.dart';
+import 'features/reviews/presentation/cubit/reviews_cubit.dart';
+import 'features/reviews/presentation/pages/reviews_page.dart';
 import 'features/study_sessions/presentation/cubit/study_sessions_cubit.dart';
 import 'features/study_sessions/presentation/pages/study_sessions_page.dart';
 import 'features/subjects/domain/entities/subject.dart';
@@ -58,6 +60,7 @@ class StudyFlowApp extends StatelessWidget {
             )..loadTopics(),
             child: TopicsPage(
               subject: subject,
+              onReviewsSelected: _openReviews,
               onStudySessionsSelected: _openStudySessions,
             ),
           );
@@ -82,6 +85,24 @@ class StudyFlowApp extends StatelessWidget {
               deleteStudySessionUseCase: dependencies.deleteStudySession,
             )..loadStudySessions(),
             child: StudySessionsPage(subject: subject, topics: topics),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openReviews(BuildContext context, Subject subject, List<Topic> topics) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return BlocProvider(
+            create: (_) => ReviewsCubit(
+              topicIds: topics.map((topic) => topic.id).toList(),
+              getPendingReviews: dependencies.getPendingReviews,
+              createReviewUseCase: dependencies.createReview,
+              completeReviewUseCase: dependencies.completeReview,
+            )..loadPendingReviews(),
+            child: ReviewsPage(subject: subject, topics: topics),
           );
         },
       ),

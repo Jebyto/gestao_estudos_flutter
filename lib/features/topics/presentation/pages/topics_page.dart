@@ -11,14 +11,19 @@ import 'topic_form_page.dart';
 typedef StudySessionsSelectedCallback =
     void Function(BuildContext context, Subject subject, List<Topic> topics);
 
+typedef ReviewsSelectedCallback =
+    void Function(BuildContext context, Subject subject, List<Topic> topics);
+
 class TopicsPage extends StatelessWidget {
   final Subject subject;
   final StudySessionsSelectedCallback? onStudySessionsSelected;
+  final ReviewsSelectedCallback? onReviewsSelected;
 
   const TopicsPage({
     super.key,
     required this.subject,
     this.onStudySessionsSelected,
+    this.onReviewsSelected,
   });
 
   @override
@@ -38,6 +43,16 @@ class TopicsPage extends StatelessWidget {
           appBar: AppBar(
             title: Text(subject.name),
             actions: [
+              if (onReviewsSelected != null)
+                IconButton(
+                  tooltip: 'Revisões',
+                  onPressed: () => onReviewsSelected!(
+                    context,
+                    subject,
+                    context.read<TopicsCubit>().state.topics,
+                  ),
+                  icon: const Icon(Icons.fact_check_outlined),
+                ),
               if (onStudySessionsSelected != null)
                 IconButton(
                   tooltip: 'Sessões de estudo',

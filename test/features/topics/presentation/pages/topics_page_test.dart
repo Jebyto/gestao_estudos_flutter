@@ -158,6 +158,41 @@ void main() {
     expect(selectedSubject, subject);
     expect(selectedTopics, [topic]);
   });
+
+  testWidgets('deve chamar callback para abrir revisões', (tester) async {
+    Subject? selectedSubject;
+    List<Topic>? selectedTopics;
+    final topic = Topic(
+      id: 'topic-1',
+      subjectId: subject.id,
+      title: 'Normalização',
+      status: TopicStatus.review,
+      priority: TopicPriority.medium,
+      createdAt: today,
+    );
+    repository.topics.add(topic);
+
+    await cubit.loadTopics();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider.value(
+          value: cubit,
+          child: TopicsPage(
+            subject: subject,
+            onReviewsSelected: (_, subject, topics) {
+              selectedSubject = subject;
+              selectedTopics = topics;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byTooltip('Revisões'));
+    await tester.pump();
+
+    expect(selectedSubject, subject);
+    expect(selectedTopics, [topic]);
+  });
 }
 
 extension on WidgetTester {
