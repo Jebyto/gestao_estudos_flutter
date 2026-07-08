@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/di/app_dependencies.dart';
+import 'features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/reviews/presentation/cubit/reviews_cubit.dart';
 import 'features/reviews/presentation/pages/reviews_page.dart';
 import 'features/study_sessions/presentation/cubit/study_sessions_cubit.dart';
@@ -36,12 +38,31 @@ class StudyFlowApp extends StatelessWidget {
         ),
       ),
       home: BlocProvider(
-        create: (_) => SubjectsCubit(
-          getSubjects: dependencies.getSubjects,
-          createSubjectUseCase: dependencies.createSubject,
-          deleteSubjectUseCase: dependencies.deleteSubject,
-        )..loadSubjects(),
-        child: SubjectsPage(onSubjectSelected: _openTopics),
+        create: (_) => DashboardCubit(
+          getDashboardSummary: dependencies.getDashboardSummary.call,
+        )..loadSummary(),
+        child: Builder(
+          builder: (context) {
+            return DashboardPage(onOpenSubjects: () => _openSubjects(context));
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openSubjects(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return BlocProvider(
+            create: (_) => SubjectsCubit(
+              getSubjects: dependencies.getSubjects,
+              createSubjectUseCase: dependencies.createSubject,
+              deleteSubjectUseCase: dependencies.deleteSubject,
+            )..loadSubjects(),
+            child: SubjectsPage(onSubjectSelected: _openTopics),
+          );
+        },
       ),
     );
   }

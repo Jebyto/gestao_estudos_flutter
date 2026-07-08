@@ -23,15 +23,14 @@ void main() {
     await dependencies.close();
   });
 
-  testWidgets('deve abrir a tela de matérias', (tester) async {
+  testWidgets('deve abrir a tela de dashboard', (tester) async {
     await tester.pumpWidget(StudyFlowApp(dependencies: dependencies));
     await tester.pump();
     await tester.runAsync(() async {
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await Future<void>.delayed(const Duration(milliseconds: 600));
     });
     await tester.pump();
 
-    expect(find.text('Matérias'), findsOneWidget);
-    expect(find.text('Nenhuma matéria cadastrada'), findsOneWidget);
+    expect(find.text('Dashboard'), findsOneWidget);
   });
 }
