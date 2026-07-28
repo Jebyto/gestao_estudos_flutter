@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gestao_estudos_flutter/core/database/app_database.dart';
 import 'package:gestao_estudos_flutter/core/di/app_dependencies.dart';
@@ -31,6 +32,46 @@ void main() {
     });
     await tester.pump();
 
-    expect(find.text('Dashboard'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Dashboard'),
+      ),
+      findsOneWidget,
+    );
   });
+
+  testWidgets('deve navegar entre dashboard e matérias', (tester) async {
+    await tester.pumpWidget(StudyFlowApp(dependencies: dependencies));
+    await tester.pump();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+    });
+    await tester.pump();
+
+    await tester.tap(_navigationDestination('Matérias'));
+    await tester.pump();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+    });
+    await tester.pump();
+
+    expect(find.text('Nenhuma matéria cadastrada'), findsOneWidget);
+
+    await tester.tap(_navigationDestination('Dashboard'));
+    await tester.pump();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+    });
+    await tester.pump();
+
+    expect(find.text('Progresso geral'), findsOneWidget);
+  });
+}
+
+Finder _navigationDestination(String label) {
+  return find.descendant(
+    of: find.byType(NavigationBar),
+    matching: find.text(label),
+  );
 }

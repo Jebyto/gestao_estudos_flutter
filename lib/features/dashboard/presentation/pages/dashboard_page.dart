@@ -8,9 +8,9 @@ import '../widgets/dashboard_formatters.dart';
 import '../widgets/dashboard_metric_card.dart';
 
 class DashboardPage extends StatelessWidget {
-  final VoidCallback onOpenSubjects;
+  final VoidCallback? onOpenSubjects;
 
-  const DashboardPage({super.key, required this.onOpenSubjects});
+  const DashboardPage({super.key, this.onOpenSubjects});
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +29,12 @@ class DashboardPage extends StatelessWidget {
           appBar: AppBar(
             title: const Text('Dashboard'),
             actions: [
-              IconButton(
-                tooltip: 'Matérias',
-                onPressed: onOpenSubjects,
-                icon: const Icon(Icons.menu_book_outlined),
-              ),
+              if (onOpenSubjects != null)
+                IconButton(
+                  tooltip: 'Matérias',
+                  onPressed: onOpenSubjects,
+                  icon: const Icon(Icons.menu_book_outlined),
+                ),
               IconButton(
                 tooltip: 'Atualizar dashboard',
                 onPressed: state.isLoading

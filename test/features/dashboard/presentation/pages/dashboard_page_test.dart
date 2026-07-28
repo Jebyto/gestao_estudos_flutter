@@ -87,10 +87,7 @@ extension on WidgetTester {
   Future<void> pumpDashboardPage(DashboardCubit cubit) {
     return pumpWidget(
       MaterialApp(
-        home: BlocProvider.value(
-          value: cubit,
-          child: DashboardPage(onOpenSubjects: () {}),
-        ),
+        home: BlocProvider.value(value: cubit, child: const DashboardPage()),
       ),
     );
   }
