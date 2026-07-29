@@ -5,6 +5,7 @@ import '../../features/reviews/domain/repositories/review_repository.dart';
 import '../../features/reviews/domain/usecases/complete_review.dart';
 import '../../features/reviews/domain/usecases/create_review.dart';
 import '../../features/reviews/domain/usecases/get_pending_reviews.dart';
+import '../../features/reviews/domain/usecases/get_review_overview.dart';
 import '../../features/reviews/domain/usecases/get_reviews_by_topic.dart';
 import '../../features/study_sessions/data/datasources/study_session_local_datasource.dart';
 import '../../features/study_sessions/data/repositories/study_session_repository_impl.dart';
@@ -90,6 +91,11 @@ class AppDependencies {
   );
   late final GetReviewsByTopic getReviewsByTopic = GetReviewsByTopic(
     reviewRepository,
+  );
+  late final GetReviewOverview getReviewOverview = GetReviewOverview(
+    subjectRepository: subjectRepository,
+    topicRepository: topicRepository,
+    reviewRepository: reviewRepository,
   );
 
   late final GetDashboardSummary getDashboardSummary = GetDashboardSummary(

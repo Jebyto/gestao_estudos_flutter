@@ -5,6 +5,7 @@ import 'package:gestao_estudos_flutter/features/dashboard/domain/usecases/get_da
 import 'package:gestao_estudos_flutter/features/reviews/data/repositories/review_repository_impl.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/entities/review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/complete_review.dart';
+import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/get_review_overview.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/data/repositories/study_session_repository_impl.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/domain/entities/study_session.dart';
 import 'package:gestao_estudos_flutter/features/subjects/data/repositories/subject_repository_impl.dart';
@@ -46,6 +47,7 @@ void main() {
     );
     expect(dependencies.reviewRepository, isA<ReviewRepositoryImpl>());
     expect(dependencies.completeReview, isA<CompleteReview>());
+    expect(dependencies.getReviewOverview, isA<GetReviewOverview>());
     expect(dependencies.getDashboardSummary, isA<GetDashboardSummary>());
   });
 
@@ -91,8 +93,12 @@ void main() {
     expect(await dependencies.getStudySessions(), [studySession]);
     expect(await dependencies.getPendingReviews(today), [review]);
 
+    final reviewOverview = await dependencies.getReviewOverview();
     final summary = await dependencies.getDashboardSummary();
 
+    expect(reviewOverview.pendingReviews.single.review, review);
+    expect(reviewOverview.pendingReviews.single.topic, topic);
+    expect(reviewOverview.pendingReviews.single.subject, subject);
     expect(summary.totalSubjects, 1);
     expect(summary.totalTopics, 1);
     expect(summary.studyingTopics, 1);
