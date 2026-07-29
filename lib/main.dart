@@ -5,7 +5,9 @@ import 'core/di/app_dependencies.dart';
 import 'core/navigation/study_flow_home.dart';
 import 'features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
+import 'features/reviews/presentation/cubit/review_overview_cubit.dart';
 import 'features/reviews/presentation/cubit/reviews_cubit.dart';
+import 'features/reviews/presentation/pages/review_overview_page.dart';
 import 'features/reviews/presentation/pages/reviews_page.dart';
 import 'features/study_sessions/presentation/cubit/study_sessions_cubit.dart';
 import 'features/study_sessions/presentation/pages/study_sessions_page.dart';
@@ -56,7 +58,7 @@ class StudyFlowApp extends StatelessWidget {
         child: Builder(
           builder: (context) {
             return StudyFlowHome(
-              dashboard: const DashboardPage(),
+              dashboard: DashboardPage(onOpenReviews: _openReviewOverview),
               subjects: SubjectsPage(onSubjectSelected: _openTopics),
               onDashboardSelected: () {
                 context.read<DashboardCubit>().loadSummary();
@@ -92,6 +94,26 @@ class StudyFlowApp extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _openReviewOverview(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return BlocProvider(
+            create: (_) => ReviewOverviewCubit(
+              getReviewOverview: dependencies.getReviewOverview,
+              completeReviewUseCase: dependencies.completeReview,
+            )..loadOverview(),
+            child: const ReviewOverviewPage(),
+          );
+        },
+      ),
+    );
+
+    if (!context.mounted) return;
+
+    await context.read<DashboardCubit>().loadSummary();
   }
 
   void _openStudySessions(

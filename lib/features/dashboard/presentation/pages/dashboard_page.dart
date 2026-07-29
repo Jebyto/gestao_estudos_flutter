@@ -7,10 +7,13 @@ import '../cubit/dashboard_state.dart';
 import '../widgets/dashboard_formatters.dart';
 import '../widgets/dashboard_metric_card.dart';
 
+typedef DashboardActionCallback = void Function(BuildContext context);
+
 class DashboardPage extends StatelessWidget {
   final VoidCallback? onOpenSubjects;
+  final DashboardActionCallback? onOpenReviews;
 
-  const DashboardPage({super.key, this.onOpenSubjects});
+  const DashboardPage({super.key, this.onOpenSubjects, this.onOpenReviews});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +47,14 @@ class DashboardPage extends StatelessWidget {
               ),
             ],
           ),
-          body: SafeArea(child: _DashboardBody(state: state)),
+          body: SafeArea(
+            child: _DashboardBody(
+              state: state,
+              onOpenReviews: onOpenReviews == null
+                  ? null
+                  : () => onOpenReviews!(context),
+            ),
+          ),
         );
       },
     );
@@ -53,8 +63,9 @@ class DashboardPage extends StatelessWidget {
 
 class _DashboardBody extends StatelessWidget {
   final DashboardState state;
+  final VoidCallback? onOpenReviews;
 
-  const _DashboardBody({required this.state});
+  const _DashboardBody({required this.state, required this.onOpenReviews});
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +90,7 @@ class _DashboardBody extends StatelessWidget {
           const SizedBox(height: 16),
           _StudySection(summary: summary),
           const SizedBox(height: 16),
-          _ReviewsSection(summary: summary),
+          _ReviewsSection(summary: summary, onOpenReviews: onOpenReviews),
         ],
       ),
     );
@@ -212,8 +223,9 @@ class _StudySection extends StatelessWidget {
 
 class _ReviewsSection extends StatelessWidget {
   final DashboardSummary summary;
+  final VoidCallback? onOpenReviews;
 
-  const _ReviewsSection({required this.summary});
+  const _ReviewsSection({required this.summary, required this.onOpenReviews});
 
   @override
   Widget build(BuildContext context) {
@@ -230,51 +242,58 @@ class _ReviewsSection extends StatelessWidget {
           icon: Icons.fact_check_outlined,
           label: 'Para hoje',
           value: summary.reviewsDueToday.toString(),
+          onTap: onOpenReviews,
         ),
         const SizedBox(height: 8),
         DashboardMetricCard(
           icon: Icons.warning_amber_outlined,
           label: 'Atrasadas',
           value: summary.overdueReviews.toString(),
+          onTap: onOpenReviews,
         ),
         const SizedBox(height: 8),
         DashboardMetricCard(
           icon: Icons.done_all_outlined,
           label: 'Concluídas na semana',
           value: summary.completedReviewsThisWeek.toString(),
+          onTap: onOpenReviews,
         ),
         const SizedBox(height: 8),
         Card(
           elevation: 0,
+          clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
             side: BorderSide(
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Próxima revisão',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  nextReviewTitle ?? 'Nenhuma revisão pendente',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                if (nextReviewSubject != null) ...[
-                  const SizedBox(height: 4),
-                  Text(nextReviewSubject),
+          child: InkWell(
+            onTap: onOpenReviews,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Próxima revisão',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    nextReviewTitle ?? 'Nenhuma revisão pendente',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  if (nextReviewSubject != null) ...[
+                    const SizedBox(height: 4),
+                    Text(nextReviewSubject),
+                  ],
+                  if (nextReviewDate != null) ...[
+                    const SizedBox(height: 4),
+                    Text(formatDashboardDate(nextReviewDate)),
+                  ],
                 ],
-                if (nextReviewDate != null) ...[
-                  const SizedBox(height: 4),
-                  Text(formatDashboardDate(nextReviewDate)),
-                ],
-              ],
+              ),
             ),
           ),
         ),

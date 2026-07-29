@@ -81,6 +81,30 @@ void main() {
 
     expect(openedSubjects, isTrue);
   });
+
+  testWidgets('deve chamar callback para abrir revisões', (tester) async {
+    var openedReviews = false;
+
+    await cubit.loadSummary();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider.value(
+          value: cubit,
+          child: DashboardPage(
+            onOpenReviews: (_) {
+              openedReviews = true;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -1400));
+    await tester.pump();
+    await tester.tap(find.text('Para hoje'));
+    await tester.pump();
+
+    expect(openedReviews, isTrue);
+  });
 }
 
 extension on WidgetTester {
