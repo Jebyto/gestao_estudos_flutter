@@ -6,6 +6,7 @@ import 'package:gestao_estudos_flutter/features/reviews/domain/repositories/revi
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/complete_review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/create_review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/get_pending_reviews.dart';
+import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/get_reviews_by_topic.dart';
 import 'package:gestao_estudos_flutter/features/reviews/presentation/cubit/reviews_cubit.dart';
 import 'package:gestao_estudos_flutter/features/reviews/presentation/pages/reviews_page.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/entities/subject.dart';
@@ -36,6 +37,7 @@ void main() {
     cubit = ReviewsCubit(
       topicIds: topics.map((topic) => topic.id).toList(),
       getPendingReviews: GetPendingReviews(repository),
+      getReviewsByTopic: GetReviewsByTopic(repository),
       createReviewUseCase: CreateReview(repository),
       completeReviewUseCase: CompleteReview(
         repository,
@@ -53,11 +55,13 @@ void main() {
   testWidgets('deve exibir estado vazio quando não houver revisões', (
     tester,
   ) async {
-    await cubit.loadPendingReviews();
+    await cubit.loadReviews();
     await tester.pumpReviewsPage(cubit, subject, topics);
 
     expect(find.text('Revisões - Banco de Dados'), findsOneWidget);
     expect(find.text('Nenhuma revisão pendente'), findsOneWidget);
+    expect(find.text('Pendentes'), findsOneWidget);
+    expect(find.text('Histórico'), findsOneWidget);
   });
 
   testWidgets('deve listar revisões pendentes', (tester) async {
@@ -70,7 +74,7 @@ void main() {
       ),
     );
 
-    await cubit.loadPendingReviews();
+    await cubit.loadReviews();
     await tester.pumpReviewsPage(cubit, subject, topics);
 
     expect(find.text('Normalização'), findsOneWidget);
@@ -81,7 +85,7 @@ void main() {
   });
 
   testWidgets('deve criar revisão pelo formulário', (tester) async {
-    await cubit.loadPendingReviews();
+    await cubit.loadReviews();
     await tester.pumpReviewsPage(cubit, subject, topics);
 
     await tester.tap(find.byIcon(Icons.add));
@@ -105,7 +109,7 @@ void main() {
       ),
     );
 
-    await cubit.loadPendingReviews();
+    await cubit.loadReviews();
     await tester.pumpReviewsPage(cubit, subject, topics);
     await tester.tap(find.widgetWithText(FilledButton, 'Boa'));
     await tester.pumpAndSettle();
@@ -115,6 +119,37 @@ void main() {
     expect(repository.reviews.first.quality, ReviewQuality.good);
     expect(repository.reviews.last.id, 'review-next');
     expect(find.text('Nenhuma revisão pendente'), findsOneWidget);
+  });
+
+  testWidgets('deve exibir revisões concluídas no histórico', (tester) async {
+    repository.reviews.add(
+      Review(
+        id: 'review-1',
+        topicId: 'topic-1',
+        scheduledFor: today.subtract(const Duration(days: 3)),
+        reviewedAt: today,
+        quality: ReviewQuality.good,
+        createdAt: today.subtract(const Duration(days: 3)),
+      ),
+    );
+
+    await cubit.loadReviews();
+    await tester.pumpReviewsPage(cubit, subject, topics);
+    await tester.tap(find.text('Histórico'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Normalização'), findsOneWidget);
+    expect(find.text('Revisada em 03/07/2026'), findsOneWidget);
+    expect(find.text('Qualidade: Boa'), findsOneWidget);
+  });
+
+  testWidgets('deve exibir estado vazio no histórico', (tester) async {
+    await cubit.loadReviews();
+    await tester.pumpReviewsPage(cubit, subject, topics);
+    await tester.tap(find.text('Histórico'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nenhuma revisão concluída'), findsOneWidget);
   });
 }
 

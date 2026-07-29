@@ -4,6 +4,7 @@ import 'package:gestao_estudos_flutter/features/reviews/domain/repositories/revi
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/complete_review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/create_review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/get_pending_reviews.dart';
+import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/get_reviews_by_topic.dart';
 import 'package:gestao_estudos_flutter/features/reviews/presentation/cubit/reviews_cubit.dart';
 import 'package:gestao_estudos_flutter/features/reviews/presentation/cubit/reviews_state.dart';
 
@@ -17,6 +18,7 @@ void main() {
     cubit = ReviewsCubit(
       topicIds: const ['topic-1', 'topic-2'],
       getPendingReviews: GetPendingReviews(repository),
+      getReviewsByTopic: GetReviewsByTopic(repository),
       createReviewUseCase: CreateReview(repository),
       completeReviewUseCase: CompleteReview(
         repository,
@@ -34,29 +36,64 @@ void main() {
   test('deve iniciar com estado initial e lista vazia', () {
     expect(cubit.state.status, ReviewsStatus.initial);
     expect(cubit.state.pendingReviews, isEmpty);
+    expect(cubit.state.completedReviews, isEmpty);
   });
 
-  test('deve carregar revisões pendentes dos tópicos da matéria', () async {
-    final review = Review(
+  test('deve carregar revisões pendentes e concluídas da matéria', () async {
+    final pendingReview = Review(
       id: 'review-1',
       topicId: 'topic-1',
       scheduledFor: today,
       createdAt: today,
     );
-    repository.reviews.add(review);
+    final completedReview = Review(
+      id: 'review-2',
+      topicId: 'topic-2',
+      scheduledFor: today.subtract(const Duration(days: 3)),
+      reviewedAt: today.subtract(const Duration(days: 1)),
+      quality: ReviewQuality.good,
+      createdAt: today.subtract(const Duration(days: 3)),
+    );
+    repository.reviews.add(pendingReview);
+    repository.reviews.add(completedReview);
     repository.reviews.add(
       Review(
-        id: 'review-2',
+        id: 'review-3',
         topicId: 'topic-3',
         scheduledFor: today,
         createdAt: today,
       ),
     );
 
-    await cubit.loadPendingReviews();
+    await cubit.loadReviews();
 
     expect(cubit.state.status, ReviewsStatus.success);
-    expect(cubit.state.pendingReviews, [review]);
+    expect(cubit.state.pendingReviews, [pendingReview]);
+    expect(cubit.state.completedReviews, [completedReview]);
+  });
+
+  test('deve ordenar histórico pela conclusão mais recente', () async {
+    final olderReview = Review(
+      id: 'review-1',
+      topicId: 'topic-1',
+      scheduledFor: today.subtract(const Duration(days: 5)),
+      reviewedAt: today.subtract(const Duration(days: 2)),
+      quality: ReviewQuality.hard,
+      createdAt: today.subtract(const Duration(days: 5)),
+    );
+    final recentReview = Review(
+      id: 'review-2',
+      topicId: 'topic-2',
+      scheduledFor: today.subtract(const Duration(days: 3)),
+      reviewedAt: today.subtract(const Duration(days: 1)),
+      quality: ReviewQuality.easy,
+      createdAt: today.subtract(const Duration(days: 3)),
+    );
+    repository.reviews.addAll([olderReview, recentReview]);
+
+    await cubit.loadReviews();
+
+    expect(cubit.state.completedReviews, [recentReview, olderReview]);
   });
 
   test('deve criar uma revisão pendente e recarregar a lista', () async {
@@ -70,6 +107,7 @@ void main() {
     expect(repository.reviews.first.createdAt, today);
     expect(cubit.state.status, ReviewsStatus.success);
     expect(cubit.state.pendingReviews, repository.reviews);
+    expect(cubit.state.completedReviews, isEmpty);
   });
 
   test('deve rejeitar criação quando tópico estiver vazio', () async {
@@ -106,6 +144,7 @@ void main() {
     );
     expect(cubit.state.status, ReviewsStatus.success);
     expect(cubit.state.pendingReviews, isEmpty);
+    expect(cubit.state.completedReviews, [repository.reviews.first]);
   });
 }
 

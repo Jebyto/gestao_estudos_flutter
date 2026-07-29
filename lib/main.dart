@@ -124,9 +124,10 @@ class StudyFlowApp extends StatelessWidget {
             create: (_) => ReviewsCubit(
               topicIds: topics.map((topic) => topic.id).toList(),
               getPendingReviews: dependencies.getPendingReviews,
+              getReviewsByTopic: dependencies.getReviewsByTopic,
               createReviewUseCase: dependencies.createReview,
               completeReviewUseCase: dependencies.completeReview,
-            )..loadPendingReviews(),
+            )..loadReviews(),
             child: ReviewsPage(subject: subject, topics: topics),
           );
         },

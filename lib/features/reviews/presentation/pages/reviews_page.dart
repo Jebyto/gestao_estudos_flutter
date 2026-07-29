@@ -7,6 +7,7 @@ import '../../domain/entities/review.dart';
 import '../cubit/reviews_cubit.dart';
 import '../cubit/reviews_state.dart';
 import '../widgets/review_card.dart';
+import '../widgets/review_history_card.dart';
 import 'review_form_page.dart';
 
 class ReviewsPage extends StatelessWidget {
@@ -28,26 +29,40 @@ class ReviewsPage extends StatelessWidget {
         ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
       },
       builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Revisões - ${subject.name}'),
-            actions: [
-              IconButton(
-                tooltip: 'Atualizar revisões',
-                onPressed: state.isLoading
-                    ? null
-                    : () => context.read<ReviewsCubit>().loadPendingReviews(),
-                icon: const Icon(Icons.refresh),
+        return DefaultTabController(
+          length: 2,
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text('Revisões - ${subject.name}'),
+              actions: [
+                IconButton(
+                  tooltip: 'Atualizar revisões',
+                  onPressed: state.isLoading
+                      ? null
+                      : () => context.read<ReviewsCubit>().loadReviews(),
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+              bottom: const TabBar(
+                tabs: [
+                  Tab(text: 'Pendentes'),
+                  Tab(text: 'Histórico'),
+                ],
               ),
-            ],
-          ),
-          body: SafeArea(
-            child: _ReviewsBody(state: state, topics: topics),
-          ),
-          floatingActionButton: FloatingActionButton(
-            tooltip: 'Adicionar revisão',
-            onPressed: topics.isEmpty ? null : () => _openForm(context),
-            child: const Icon(Icons.add),
+            ),
+            body: SafeArea(
+              child: TabBarView(
+                children: [
+                  _PendingReviewsView(state: state, topics: topics),
+                  _ReviewHistoryView(state: state, topics: topics),
+                ],
+              ),
+            ),
+            floatingActionButton: FloatingActionButton(
+              tooltip: 'Adicionar revisão',
+              onPressed: topics.isEmpty ? null : () => _openForm(context),
+              child: const Icon(Icons.add),
+            ),
           ),
         );
       },
@@ -68,11 +83,11 @@ class ReviewsPage extends StatelessWidget {
   }
 }
 
-class _ReviewsBody extends StatelessWidget {
+class _PendingReviewsView extends StatelessWidget {
   final ReviewsState state;
   final List<Topic> topics;
 
-  const _ReviewsBody({required this.state, required this.topics});
+  const _PendingReviewsView({required this.state, required this.topics});
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +100,7 @@ class _ReviewsBody extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () => context.read<ReviewsCubit>().loadPendingReviews(),
+      onRefresh: () => context.read<ReviewsCubit>().loadReviews(),
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
         itemCount: state.pendingReviews.length,
@@ -95,7 +110,7 @@ class _ReviewsBody extends StatelessWidget {
 
           return ReviewCard(
             review: review,
-            topic: _topicForReview(review),
+            topic: _topicForReview(review, topics),
             onComplete: (quality) => context
                 .read<ReviewsCubit>()
                 .completeReview(reviewId: review.id, quality: quality),
@@ -104,13 +119,40 @@ class _ReviewsBody extends StatelessWidget {
       ),
     );
   }
+}
 
-  Topic? _topicForReview(Review review) {
-    for (final topic in topics) {
-      if (topic.id == review.topicId) return topic;
+class _ReviewHistoryView extends StatelessWidget {
+  final ReviewsState state;
+  final List<Topic> topics;
+
+  const _ReviewHistoryView({required this.state, required this.topics});
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.isLoading && state.completedReviews.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return null;
+    if (state.completedReviews.isEmpty) {
+      return const _EmptyReviewHistoryView();
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => context.read<ReviewsCubit>().loadReviews(),
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+        itemCount: state.completedReviews.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final review = state.completedReviews[index];
+
+          return ReviewHistoryCard(
+            review: review,
+            topic: _topicForReview(review, topics),
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -147,4 +189,47 @@ class _EmptyReviewsView extends StatelessWidget {
       ),
     );
   }
+}
+
+class _EmptyReviewHistoryView extends StatelessWidget {
+  const _EmptyReviewHistoryView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.history_outlined,
+              size: 56,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Nenhuma revisão concluída',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'As revisões concluídas aparecerão aqui.',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Topic? _topicForReview(Review review, List<Topic> topics) {
+  for (final topic in topics) {
+    if (topic.id == review.topicId) return topic;
+  }
+
+  return null;
 }

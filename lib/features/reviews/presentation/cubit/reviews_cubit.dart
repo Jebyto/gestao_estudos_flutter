@@ -4,6 +4,7 @@ import '../../domain/entities/review.dart';
 import '../../domain/usecases/complete_review.dart';
 import '../../domain/usecases/create_review.dart';
 import '../../domain/usecases/get_pending_reviews.dart';
+import '../../domain/usecases/get_reviews_by_topic.dart';
 import 'reviews_state.dart';
 
 typedef ReviewPresentationIdGenerator = String Function();
@@ -12,6 +13,7 @@ typedef ReviewDateTimeProvider = DateTime Function();
 class ReviewsCubit extends Cubit<ReviewsState> {
   final List<String> topicIds;
   final GetPendingReviews getPendingReviews;
+  final GetReviewsByTopic getReviewsByTopic;
   final CreateReview createReviewUseCase;
   final CompleteReview completeReviewUseCase;
   final ReviewPresentationIdGenerator generateReviewId;
@@ -20,6 +22,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
   ReviewsCubit({
     required this.topicIds,
     required this.getPendingReviews,
+    required this.getReviewsByTopic,
     required this.createReviewUseCase,
     required this.completeReviewUseCase,
     ReviewPresentationIdGenerator? generateReviewId,
@@ -28,7 +31,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
        now = now ?? DateTime.now,
        super(const ReviewsState());
 
-  Future<void> loadPendingReviews() async {
+  Future<void> loadReviews() async {
     emit(state.copyWith(status: ReviewsStatus.loading, errorMessage: null));
 
     try {
@@ -42,11 +45,13 @@ class ReviewsCubit extends Cubit<ReviewsState> {
             ..sort((first, second) {
               return first.scheduledFor.compareTo(second.scheduledFor);
             });
+      final completedReviews = await _getCompletedReviews(topicIdsSet);
 
       emit(
         state.copyWith(
           status: ReviewsStatus.success,
           pendingReviews: filteredReviews,
+          completedReviews: completedReviews,
           errorMessage: null,
         ),
       );
@@ -86,7 +91,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
           createdAt: currentDate,
         ),
       );
-      await loadPendingReviews();
+      await loadReviews();
 
       return true;
     } catch (_) {
@@ -112,7 +117,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         quality: quality,
         reviewedAt: now(),
       );
-      await loadPendingReviews();
+      await loadReviews();
     } catch (_) {
       emit(
         state.copyWith(
@@ -121,6 +126,23 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         ),
       );
     }
+  }
+
+  Future<List<Review>> _getCompletedReviews(Set<String> topicIdsSet) async {
+    final completedReviews = <Review>[];
+
+    for (final topicId in topicIdsSet) {
+      final topicReviews = await getReviewsByTopic(topicId);
+      completedReviews.addAll(
+        topicReviews.where((review) => review.isCompleted),
+      );
+    }
+
+    completedReviews.sort((first, second) {
+      return second.reviewedAt!.compareTo(first.reviewedAt!);
+    });
+
+    return completedReviews;
   }
 }
 
