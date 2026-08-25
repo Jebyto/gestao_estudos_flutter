@@ -6,6 +6,8 @@ import 'package:gestao_estudos_flutter/features/reviews/data/repositories/review
 import 'package:gestao_estudos_flutter/features/reviews/domain/entities/review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/complete_review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/get_review_overview.dart';
+import 'package:gestao_estudos_flutter/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:gestao_estudos_flutter/features/settings/domain/entities/theme_preference.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/data/repositories/study_session_repository_impl.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/domain/entities/study_session.dart';
 import 'package:gestao_estudos_flutter/features/subjects/data/repositories/subject_repository_impl.dart';
@@ -48,7 +50,16 @@ void main() {
     expect(dependencies.reviewRepository, isA<ReviewRepositoryImpl>());
     expect(dependencies.completeReview, isA<CompleteReview>());
     expect(dependencies.getReviewOverview, isA<GetReviewOverview>());
+    expect(dependencies.settingsRepository, isA<SettingsRepositoryImpl>());
     expect(dependencies.getDashboardSummary, isA<GetDashboardSummary>());
+  });
+
+  test('deve persistir preferência de tema usando repository real', () async {
+    expect(await dependencies.getThemePreference(), ThemePreference.system);
+
+    await dependencies.updateThemePreference(ThemePreference.dark);
+
+    expect(await dependencies.getThemePreference(), ThemePreference.dark);
   });
 
   test('deve conectar use cases aos repositories SQLite reais', () async {

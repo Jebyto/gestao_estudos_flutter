@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 class AppDatabase {
   static const String databaseName = 'study_flow.db';
-  static const int databaseVersion = 1;
+  static const int databaseVersion = 2;
 
   final String? databasePath;
   final DatabaseFactory _databaseFactory;
@@ -46,6 +46,7 @@ class AppDatabase {
           await database.execute('PRAGMA foreign_keys = ON');
         },
         onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
         singleInstance: singleInstance,
       ),
     );
@@ -102,6 +103,27 @@ class AppDatabase {
         quality TEXT,
         created_at TEXT NOT NULL,
         FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await _createSettingsTable(database);
+  }
+
+  Future<void> _onUpgrade(
+    Database database,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    if (oldVersion < 2) {
+      await _createSettingsTable(database);
+    }
+  }
+
+  Future<void> _createSettingsTable(Database database) {
+    return database.execute('''
+      CREATE TABLE settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
       )
     ''');
   }

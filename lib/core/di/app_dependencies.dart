@@ -7,6 +7,11 @@ import '../../features/reviews/domain/usecases/create_review.dart';
 import '../../features/reviews/domain/usecases/get_pending_reviews.dart';
 import '../../features/reviews/domain/usecases/get_review_overview.dart';
 import '../../features/reviews/domain/usecases/get_reviews_by_topic.dart';
+import '../../features/settings/data/datasources/settings_local_datasource.dart';
+import '../../features/settings/data/repositories/settings_repository_impl.dart';
+import '../../features/settings/domain/repositories/settings_repository.dart';
+import '../../features/settings/domain/usecases/get_theme_preference.dart';
+import '../../features/settings/domain/usecases/update_theme_preference.dart';
 import '../../features/study_sessions/data/datasources/study_session_local_datasource.dart';
 import '../../features/study_sessions/data/repositories/study_session_repository_impl.dart';
 import '../../features/study_sessions/domain/repositories/study_session_repository.dart';
@@ -105,6 +110,17 @@ class AppDependencies {
     reviewRepository: reviewRepository,
     now: now,
   );
+
+  late final SettingsLocalDataSource settingsLocalDataSource =
+      SettingsLocalDataSourceImpl(appDatabase);
+  late final SettingsRepository settingsRepository = SettingsRepositoryImpl(
+    settingsLocalDataSource,
+  );
+  late final GetThemePreference getThemePreference = GetThemePreference(
+    settingsRepository,
+  );
+  late final UpdateThemePreference updateThemePreference =
+      UpdateThemePreference(settingsRepository);
 
   Future<void> close() {
     return appDatabase.close();
