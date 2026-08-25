@@ -9,6 +9,10 @@ import 'features/reviews/presentation/cubit/review_overview_cubit.dart';
 import 'features/reviews/presentation/cubit/reviews_cubit.dart';
 import 'features/reviews/presentation/pages/review_overview_page.dart';
 import 'features/reviews/presentation/pages/reviews_page.dart';
+import 'features/settings/domain/entities/theme_preference.dart';
+import 'features/settings/presentation/cubit/settings_cubit.dart';
+import 'features/settings/presentation/cubit/settings_state.dart';
+import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/study_sessions/presentation/cubit/study_sessions_cubit.dart';
 import 'features/study_sessions/presentation/pages/study_sessions_page.dart';
 import 'features/subjects/domain/entities/subject.dart';
@@ -31,44 +35,60 @@ class StudyFlowApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'StudyFlow',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        inputDecorationTheme: const InputDecorationTheme(
-          floatingLabelBehavior: FloatingLabelBehavior.auto,
-        ),
+    return BlocProvider(
+      create: (_) => SettingsCubit(
+        getThemePreference: dependencies.getThemePreference,
+        updateThemePreferenceUseCase: dependencies.updateThemePreference,
+      )..loadSettings(),
+      child: BlocBuilder<SettingsCubit, SettingsState>(
+        builder: (context, settingsState) {
+          return MaterialApp(
+            title: 'StudyFlow',
+            debugShowCheckedModeBanner: false,
+            themeMode: _themeModeFor(settingsState.themePreference),
+            theme: _buildTheme(Brightness.light),
+            darkTheme: _buildTheme(Brightness.dark),
+            home:
+                settingsState.isLoading ||
+                    settingsState.status == SettingsStatus.initial
+                ? const _AppLoadingView()
+                : _buildHome(),
+          );
+        },
       ),
-      home: MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (_) => DashboardCubit(
-              getDashboardSummary: dependencies.getDashboardSummary.call,
-            )..loadSummary(),
-          ),
-          BlocProvider(
-            create: (_) => SubjectsCubit(
-              getSubjects: dependencies.getSubjects,
-              createSubjectUseCase: dependencies.createSubject,
-              deleteSubjectUseCase: dependencies.deleteSubject,
-            ),
-          ),
-        ],
-        child: Builder(
-          builder: (context) {
-            return StudyFlowHome(
-              dashboard: DashboardPage(onOpenReviews: _openReviewOverview),
-              subjects: SubjectsPage(onSubjectSelected: _openTopics),
-              onDashboardSelected: () {
-                context.read<DashboardCubit>().loadSummary();
-              },
-              onSubjectsSelected: () {
-                context.read<SubjectsCubit>().loadSubjects();
-              },
-            );
-          },
+    );
+  }
+
+  Widget _buildHome() {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => DashboardCubit(
+            getDashboardSummary: dependencies.getDashboardSummary.call,
+          )..loadSummary(),
         ),
+        BlocProvider(
+          create: (_) => SubjectsCubit(
+            getSubjects: dependencies.getSubjects,
+            createSubjectUseCase: dependencies.createSubject,
+            deleteSubjectUseCase: dependencies.deleteSubject,
+          ),
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
+          return StudyFlowHome(
+            dashboard: DashboardPage(onOpenReviews: _openReviewOverview),
+            subjects: SubjectsPage(onSubjectSelected: _openTopics),
+            settings: const SettingsPage(),
+            onDashboardSelected: () {
+              context.read<DashboardCubit>().loadSummary();
+            },
+            onSubjectsSelected: () {
+              context.read<SubjectsCubit>().loadSubjects();
+            },
+          );
+        },
       ),
     );
   }
@@ -155,5 +175,34 @@ class StudyFlowApp extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+ThemeMode _themeModeFor(ThemePreference preference) {
+  return switch (preference) {
+    ThemePreference.system => ThemeMode.system,
+    ThemePreference.light => ThemeMode.light,
+    ThemePreference.dark => ThemeMode.dark,
+  };
+}
+
+ThemeData _buildTheme(Brightness brightness) {
+  return ThemeData(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.teal,
+      brightness: brightness,
+    ),
+    inputDecorationTheme: const InputDecorationTheme(
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
+    ),
+  );
+}
+
+class _AppLoadingView extends StatelessWidget {
+  const _AppLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

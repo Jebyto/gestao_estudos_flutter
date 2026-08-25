@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class StudyFlowHome extends StatefulWidget {
   final Widget dashboard;
   final Widget subjects;
+  final Widget settings;
   final VoidCallback onDashboardSelected;
   final VoidCallback onSubjectsSelected;
 
@@ -10,6 +11,7 @@ class StudyFlowHome extends StatefulWidget {
     super.key,
     required this.dashboard,
     required this.subjects,
+    required this.settings,
     required this.onDashboardSelected,
     required this.onSubjectsSelected,
   });
@@ -33,7 +35,9 @@ class _StudyFlowHomeState extends State<StudyFlowHome> {
       return;
     }
 
-    widget.onSubjectsSelected();
+    if (index == 1) {
+      widget.onSubjectsSelected();
+    }
   }
 
   @override
@@ -41,7 +45,7 @@ class _StudyFlowHomeState extends State<StudyFlowHome> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: [widget.dashboard, widget.subjects],
+        children: [widget.dashboard, widget.subjects, widget.settings],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
@@ -56,6 +60,11 @@ class _StudyFlowHomeState extends State<StudyFlowHome> {
             icon: Icon(Icons.menu_book_outlined),
             selectedIcon: Icon(Icons.menu_book),
             label: 'Matérias',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Configurações',
           ),
         ],
       ),

@@ -12,6 +12,7 @@ void main() {
         home: StudyFlowHome(
           dashboard: const Center(child: Text('Resumo do dashboard')),
           subjects: const Center(child: Text('Lista de matérias')),
+          settings: const Center(child: Text('Preferências do app')),
           onDashboardSelected: () {
             dashboardSelections++;
           },
@@ -24,6 +25,7 @@ void main() {
 
     expect(find.text('Resumo do dashboard'), findsOneWidget);
     expect(find.text('Lista de matérias'), findsNothing);
+    expect(find.text('Preferências do app'), findsNothing);
 
     await tester.tap(find.text('Matérias'));
     await tester.pumpAndSettle();
@@ -38,6 +40,12 @@ void main() {
     expect(find.text('Resumo do dashboard'), findsOneWidget);
     expect(find.text('Lista de matérias'), findsNothing);
     expect(dashboardSelections, 1);
+
+    await tester.tap(find.text('Configurações'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Preferências do app'), findsOneWidget);
+    expect(find.text('Resumo do dashboard'), findsNothing);
   });
 
   testWidgets('não deve recarregar o destino já selecionado', (tester) async {
@@ -48,6 +56,7 @@ void main() {
         home: StudyFlowHome(
           dashboard: const SizedBox(),
           subjects: const SizedBox(),
+          settings: const SizedBox(),
           onDashboardSelected: () {
             dashboardSelections++;
           },

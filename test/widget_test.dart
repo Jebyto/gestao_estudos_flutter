@@ -91,6 +91,26 @@ void main() {
     expect(find.text('Pendentes'), findsOneWidget);
     expect(find.text('Histórico'), findsOneWidget);
   });
+
+  testWidgets('deve alterar o tema pelas configurações', (tester) async {
+    await tester.pumpWidget(StudyFlowApp(dependencies: dependencies));
+    await tester.pump();
+    await _waitForDashboard(tester);
+
+    await tester.tap(_navigationDestination('Configurações'));
+    await tester.pump();
+    await tester.tap(find.text('Escuro'));
+    await tester.pump();
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await tester.pump();
+
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.dark,
+    );
+  });
 }
 
 Finder _navigationDestination(String label) {
