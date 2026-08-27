@@ -7,6 +7,7 @@ import '../models/topic_model.dart';
 abstract class TopicLocalDataSource {
   Future<void> createTopic(TopicModel topic);
   Future<List<TopicModel>> getTopicsBySubject(String subjectId);
+  Future<void> updateTopic(TopicModel topic);
   Future<void> updateTopicStatus(String topicId, TopicStatus status);
   Future<void> deleteTopic(String id);
 }
@@ -45,6 +46,18 @@ class TopicLocalDataSourceImpl implements TopicLocalDataSource {
     );
 
     return result.map(TopicModel.fromMap).toList();
+  }
+
+  @override
+  Future<void> updateTopic(TopicModel topic) async {
+    final database = await appDatabase.database;
+
+    await database.update(
+      'topics',
+      topic.toMap(),
+      where: 'id = ?',
+      whereArgs: [topic.id],
+    );
   }
 
   @override

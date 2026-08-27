@@ -124,9 +124,23 @@ class _TopicsBody extends StatelessWidget {
             onStatusChanged: (status) => context
                 .read<TopicsCubit>()
                 .updateStatus(topicId: topic.id, status: status),
+            onEdit: () => _openForm(context, topic),
             onDelete: () => _confirmDelete(context, topic),
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _openForm(BuildContext context, Topic topic) {
+    final cubit = context.read<TopicsCubit>();
+
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BlocProvider.value(
+          value: cubit,
+          child: TopicFormPage(topic: topic),
+        ),
       ),
     );
   }

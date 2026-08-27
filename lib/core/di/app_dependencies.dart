@@ -32,6 +32,7 @@ import '../../features/topics/domain/repositories/topic_repository.dart';
 import '../../features/topics/domain/usecases/create_topic.dart';
 import '../../features/topics/domain/usecases/delete_topic.dart';
 import '../../features/topics/domain/usecases/get_topics_by_subject.dart';
+import '../../features/topics/domain/usecases/update_topic.dart';
 import '../../features/topics/domain/usecases/update_topic_status.dart';
 import '../database/app_database.dart';
 
@@ -62,6 +63,7 @@ class AppDependencies {
   late final GetTopicsBySubject getTopicsBySubject = GetTopicsBySubject(
     topicRepository,
   );
+  late final UpdateTopic updateTopic = UpdateTopic(topicRepository);
   late final UpdateTopicStatus updateTopicStatus = UpdateTopicStatus(
     topicRepository,
   );

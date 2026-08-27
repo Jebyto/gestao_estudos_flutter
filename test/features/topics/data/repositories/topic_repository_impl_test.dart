@@ -69,6 +69,25 @@ void main() {
       expect(localDataSource.topics.first.status, TopicStatus.completed);
     });
 
+    test('should update a topic using the local datasource', () async {
+      final topic = Topic(
+        id: 'topic-1',
+        subjectId: 'subject-1',
+        title: 'Advanced Functions',
+        status: TopicStatus.studying,
+        priority: TopicPriority.high,
+        createdAt: DateTime(2026, 6, 8),
+        updatedAt: DateTime(2026, 6, 9),
+      );
+
+      await repository.updateTopic(topic);
+
+      expect(localDataSource.updateTopicWasCalled, isTrue);
+      expect(localDataSource.updatedTopic?.id, topic.id);
+      expect(localDataSource.updatedTopic?.title, topic.title);
+      expect(localDataSource.updatedTopic?.updatedAt, topic.updatedAt);
+    });
+
     test('should delete a topic using the local datasource', () async {
       // Arrange
       localDataSource.topics.add(
@@ -121,11 +140,13 @@ class FakeTopicLocalDataSource implements TopicLocalDataSource {
   final List<TopicModel> topics = [];
   bool createTopicWasCalled = false;
   bool getTopicsBySubjectWasCalled = false;
+  bool updateTopicWasCalled = false;
   bool updateTopicStatusWasCalled = false;
   bool deleteTopicWasCalled = false;
   String? receivedSubjectId;
   String? receivedTopicId;
   TopicStatus? receivedStatus;
+  TopicModel? updatedTopic;
   String? deletedTopicId;
 
   @override
@@ -171,5 +192,11 @@ class FakeTopicLocalDataSource implements TopicLocalDataSource {
         nextReviewAt: topic.nextReviewAt,
       );
     }
+  }
+
+  @override
+  Future<void> updateTopic(TopicModel topic) async {
+    updateTopicWasCalled = true;
+    updatedTopic = topic;
   }
 }

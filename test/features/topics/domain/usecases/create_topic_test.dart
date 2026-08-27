@@ -157,5 +157,8 @@ class FakeTopicRepository implements TopicRepository {
   }
 
   @override
+  Future<void> updateTopic(Topic topic) async {}
+
+  @override
   Future<void> updateTopicStatus(String topicId, TopicStatus status) async {}
 }

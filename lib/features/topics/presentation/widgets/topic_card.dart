@@ -6,12 +6,14 @@ import 'topic_formatters.dart';
 class TopicCard extends StatelessWidget {
   final Topic topic;
   final ValueChanged<TopicStatus> onStatusChanged;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const TopicCard({
     super.key,
     required this.topic,
     required this.onStatusChanged,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -53,6 +55,11 @@ class TopicCard extends StatelessWidget {
                       );
                     }).toList();
                   },
+                ),
+                IconButton(
+                  tooltip: 'Editar tópico',
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
                 ),
                 IconButton(
                   tooltip: 'Excluir tópico',

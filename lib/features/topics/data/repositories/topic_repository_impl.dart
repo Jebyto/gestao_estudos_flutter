@@ -28,6 +28,13 @@ class TopicRepositoryImpl implements TopicRepository {
   }
 
   @override
+  Future<void> updateTopic(Topic topic) {
+    final model = TopicModel.fromEntity(topic);
+
+    return localDataSource.updateTopic(model);
+  }
+
+  @override
   Future<void> updateTopicStatus(String topicId, TopicStatus status) {
     return localDataSource.updateTopicStatus(topicId, status);
   }

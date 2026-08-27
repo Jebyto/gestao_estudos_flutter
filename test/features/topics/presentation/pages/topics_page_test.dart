@@ -7,6 +7,7 @@ import 'package:gestao_estudos_flutter/features/topics/domain/repositories/topic
 import 'package:gestao_estudos_flutter/features/topics/domain/usecases/create_topic.dart';
 import 'package:gestao_estudos_flutter/features/topics/domain/usecases/delete_topic.dart';
 import 'package:gestao_estudos_flutter/features/topics/domain/usecases/get_topics_by_subject.dart';
+import 'package:gestao_estudos_flutter/features/topics/domain/usecases/update_topic.dart';
 import 'package:gestao_estudos_flutter/features/topics/domain/usecases/update_topic_status.dart';
 import 'package:gestao_estudos_flutter/features/topics/presentation/cubit/topics_cubit.dart';
 import 'package:gestao_estudos_flutter/features/topics/presentation/pages/topics_page.dart';
@@ -27,6 +28,7 @@ void main() {
       subjectId: subject.id,
       getTopicsBySubject: GetTopicsBySubject(repository),
       createTopicUseCase: CreateTopic(repository),
+      updateTopicUseCase: UpdateTopic(repository),
       updateTopicStatusUseCase: UpdateTopicStatus(repository),
       deleteTopicUseCase: DeleteTopic(repository),
       generateTopicId: () => 'topic-created',
@@ -97,6 +99,51 @@ void main() {
 
     expect(find.text('Informe o título do tópico'), findsOneWidget);
     expect(repository.topics, isEmpty);
+  });
+
+  testWidgets('deve editar tópico pelo formulário preenchido', (tester) async {
+    repository.topics.add(
+      Topic(
+        id: 'topic-1',
+        subjectId: subject.id,
+        title: 'Normalização',
+        description: 'Formas normais',
+        status: TopicStatus.studying,
+        priority: TopicPriority.medium,
+        createdAt: DateTime(2026, 6, 1),
+      ),
+    );
+    await cubit.loadTopics();
+    await tester.pumpTopicsPage(cubit, subject);
+
+    await tester.tap(find.byTooltip('Editar tópico'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar tópico'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Normalização'), findsOneWidget);
+    expect(
+      find.widgetWithText(TextFormField, 'Formas normais'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'Normalização avançada',
+    );
+    await tester.enterText(find.byType(TextFormField).last, 'Quinta forma');
+    await tester.tap(find.byType(DropdownButtonFormField<TopicPriority>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Alta').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(repository.topics.single.title, 'Normalização avançada');
+    expect(repository.topics.single.description, 'Quinta forma');
+    expect(repository.topics.single.priority, TopicPriority.high);
+    expect(repository.topics.single.status, TopicStatus.studying);
+    expect(repository.topics.single.updatedAt, today);
+    expect(find.text('Normalização avançada'), findsOneWidget);
   });
 
   testWidgets('deve atualizar status do tópico pela tela', (tester) async {
@@ -243,5 +290,11 @@ class FakeTopicRepository implements TopicRepository {
       completedAt: topic.completedAt,
       nextReviewAt: topic.nextReviewAt,
     );
+  }
+
+  @override
+  Future<void> updateTopic(Topic topic) async {
+    final index = topics.indexWhere((item) => item.id == topic.id);
+    topics[index] = topic;
   }
 }

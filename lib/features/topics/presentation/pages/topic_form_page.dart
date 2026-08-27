@@ -7,7 +7,9 @@ import '../cubit/topics_state.dart';
 import '../widgets/topic_formatters.dart';
 
 class TopicFormPage extends StatefulWidget {
-  const TopicFormPage({super.key});
+  final Topic? topic;
+
+  const TopicFormPage({super.key, this.topic});
 
   @override
   State<TopicFormPage> createState() => _TopicFormPageState();
@@ -19,6 +21,20 @@ class _TopicFormPageState extends State<TopicFormPage> {
   final _descriptionController = TextEditingController();
   TopicPriority _priority = TopicPriority.medium;
 
+  bool get _isEditing => widget.topic != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final topic = widget.topic;
+    if (topic == null) return;
+
+    _titleController.text = topic.title;
+    _descriptionController.text = topic.description ?? '';
+    _priority = topic.priority;
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -29,7 +45,7 @@ class _TopicFormPageState extends State<TopicFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Novo tópico')),
+      appBar: AppBar(title: Text(_isEditing ? 'Editar tópico' : 'Novo tópico')),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -112,13 +128,22 @@ class _TopicFormPageState extends State<TopicFormPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final created = await context.read<TopicsCubit>().createTopic(
-      title: _titleController.text,
-      description: _descriptionController.text,
-      priority: _priority,
-    );
+    final cubit = context.read<TopicsCubit>();
+    final topic = widget.topic;
+    final saved = topic == null
+        ? await cubit.createTopic(
+            title: _titleController.text,
+            description: _descriptionController.text,
+            priority: _priority,
+          )
+        : await cubit.updateTopic(
+            topic: topic,
+            title: _titleController.text,
+            description: _descriptionController.text,
+            priority: _priority,
+          );
 
-    if (!mounted || !created) return;
+    if (!mounted || !saved) return;
 
     Navigator.of(context).pop();
   }

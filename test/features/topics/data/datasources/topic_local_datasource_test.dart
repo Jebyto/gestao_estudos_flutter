@@ -104,6 +104,50 @@ void main() {
       expect(topics.first.status, TopicStatus.completed);
     });
 
+    test('should update a topic in SQLite preserving related fields', () async {
+      await subjectDataSource.createSubject(makeSubject(id: 'subject-1'));
+      final createdAt = DateTime(2026, 6, 8);
+      final completedAt = DateTime(2026, 6, 9);
+      final nextReviewAt = DateTime(2026, 6, 12);
+      await topicDataSource.createTopic(
+        TopicModel(
+          id: 'topic-1',
+          subjectId: 'subject-1',
+          title: 'Functions',
+          status: TopicStatus.completed,
+          priority: TopicPriority.medium,
+          createdAt: createdAt,
+          completedAt: completedAt,
+          nextReviewAt: nextReviewAt,
+        ),
+      );
+      final updatedTopic = TopicModel(
+        id: 'topic-1',
+        subjectId: 'subject-1',
+        title: 'Advanced Functions',
+        description: 'Updated description',
+        status: TopicStatus.completed,
+        priority: TopicPriority.high,
+        createdAt: createdAt,
+        updatedAt: DateTime(2026, 6, 10),
+        completedAt: completedAt,
+        nextReviewAt: nextReviewAt,
+      );
+
+      await topicDataSource.updateTopic(updatedTopic);
+      final topics = await topicDataSource.getTopicsBySubject('subject-1');
+
+      expect(topics.single.id, updatedTopic.id);
+      expect(topics.single.title, updatedTopic.title);
+      expect(topics.single.description, updatedTopic.description);
+      expect(topics.single.status, updatedTopic.status);
+      expect(topics.single.priority, updatedTopic.priority);
+      expect(topics.single.createdAt, createdAt);
+      expect(topics.single.updatedAt, updatedTopic.updatedAt);
+      expect(topics.single.completedAt, completedAt);
+      expect(topics.single.nextReviewAt, nextReviewAt);
+    });
+
     test('should delete a topic from SQLite', () async {
       // Arrange
       await subjectDataSource.createSubject(makeSubject(id: 'subject-1'));

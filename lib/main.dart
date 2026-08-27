@@ -103,6 +103,7 @@ class StudyFlowApp extends StatelessWidget {
               subjectId: subject.id,
               getTopicsBySubject: dependencies.getTopicsBySubject,
               createTopicUseCase: dependencies.createTopic,
+              updateTopicUseCase: dependencies.updateTopic,
               updateTopicStatusUseCase: dependencies.updateTopicStatus,
               deleteTopicUseCase: dependencies.deleteTopic,
             )..loadTopics(),

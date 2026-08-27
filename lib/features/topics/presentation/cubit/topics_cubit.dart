@@ -4,6 +4,7 @@ import '../../domain/entities/topic.dart';
 import '../../domain/usecases/create_topic.dart';
 import '../../domain/usecases/delete_topic.dart';
 import '../../domain/usecases/get_topics_by_subject.dart';
+import '../../domain/usecases/update_topic.dart';
 import '../../domain/usecases/update_topic_status.dart';
 import 'topics_state.dart';
 
@@ -14,6 +15,7 @@ class TopicsCubit extends Cubit<TopicsState> {
   final String subjectId;
   final GetTopicsBySubject getTopicsBySubject;
   final CreateTopic createTopicUseCase;
+  final UpdateTopic updateTopicUseCase;
   final UpdateTopicStatus updateTopicStatusUseCase;
   final DeleteTopic deleteTopicUseCase;
   final TopicIdGenerator generateTopicId;
@@ -23,6 +25,7 @@ class TopicsCubit extends Cubit<TopicsState> {
     required this.subjectId,
     required this.getTopicsBySubject,
     required this.createTopicUseCase,
+    required this.updateTopicUseCase,
     required this.updateTopicStatusUseCase,
     required this.deleteTopicUseCase,
     TopicIdGenerator? generateTopicId,
@@ -118,6 +121,58 @@ class TopicsCubit extends Cubit<TopicsState> {
           errorMessage: 'Não foi possível atualizar o tópico.',
         ),
       );
+    }
+  }
+
+  Future<bool> updateTopic({
+    required Topic topic,
+    required String title,
+    String? description,
+    required TopicPriority priority,
+  }) async {
+    final trimmedTitle = title.trim();
+    final trimmedDescription = description?.trim();
+
+    if (trimmedTitle.isEmpty) {
+      emit(
+        state.copyWith(
+          status: TopicsStatus.failure,
+          errorMessage: 'Informe o título do tópico.',
+        ),
+      );
+      return false;
+    }
+
+    emit(state.copyWith(status: TopicsStatus.submitting, errorMessage: null));
+
+    try {
+      await updateTopicUseCase(
+        Topic(
+          id: topic.id,
+          subjectId: topic.subjectId,
+          title: trimmedTitle,
+          description: trimmedDescription == null || trimmedDescription.isEmpty
+              ? null
+              : trimmedDescription,
+          status: topic.status,
+          priority: priority,
+          createdAt: topic.createdAt,
+          updatedAt: now(),
+          completedAt: topic.completedAt,
+          nextReviewAt: topic.nextReviewAt,
+        ),
+      );
+      await loadTopics();
+
+      return true;
+    } catch (_) {
+      emit(
+        state.copyWith(
+          status: TopicsStatus.failure,
+          errorMessage: 'Não foi possível atualizar o tópico.',
+        ),
+      );
+      return false;
     }
   }
 
