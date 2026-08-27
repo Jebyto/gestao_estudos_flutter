@@ -5,12 +5,14 @@ import '../../domain/entities/subject.dart';
 class SubjectCard extends StatelessWidget {
   final Subject subject;
   final VoidCallback? onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const SubjectCard({
     super.key,
     required this.subject,
     this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -63,6 +65,11 @@ class SubjectCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'Editar matéria',
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+              ),
               IconButton(
                 tooltip: 'Excluir matéria',
                 onPressed: onDelete,

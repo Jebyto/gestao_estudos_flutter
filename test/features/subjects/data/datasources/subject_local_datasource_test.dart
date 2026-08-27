@@ -80,6 +80,27 @@ void main() {
       },
     );
 
+    test('should update a subject in SQLite', () async {
+      final subject = makeSubject(id: 'subject-1', name: 'Math');
+      final updatedSubject = SubjectModel(
+        id: subject.id,
+        name: 'Advanced Math',
+        description: 'Updated description',
+        createdAt: subject.createdAt,
+        updatedAt: DateTime(2026, 6, 9),
+      );
+      await dataSource.createSubject(subject);
+
+      await dataSource.updateSubject(updatedSubject);
+      final subjects = await dataSource.getSubjects();
+
+      expect(subjects.single.id, updatedSubject.id);
+      expect(subjects.single.name, updatedSubject.name);
+      expect(subjects.single.description, updatedSubject.description);
+      expect(subjects.single.createdAt, updatedSubject.createdAt);
+      expect(subjects.single.updatedAt, updatedSubject.updatedAt);
+    });
+
     test('should delete a subject from SQLite', () async {
       // Arrange
       final subject = makeSubject(id: 'subject-1', name: 'Math');

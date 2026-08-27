@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/subject.dart';
 import '../cubit/subjects_cubit.dart';
 import '../cubit/subjects_state.dart';
 
 class SubjectFormPage extends StatefulWidget {
-  const SubjectFormPage({super.key});
+  final Subject? subject;
+
+  const SubjectFormPage({super.key, this.subject});
 
   @override
   State<SubjectFormPage> createState() => _SubjectFormPageState();
@@ -15,6 +18,19 @@ class _SubjectFormPageState extends State<SubjectFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  bool get _isEditing => widget.subject != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final subject = widget.subject;
+    if (subject == null) return;
+
+    _nameController.text = subject.name;
+    _descriptionController.text = subject.description ?? '';
+  }
 
   @override
   void dispose() {
@@ -26,7 +42,9 @@ class _SubjectFormPageState extends State<SubjectFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nova matéria')),
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Editar matéria' : 'Nova matéria'),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -87,12 +105,20 @@ class _SubjectFormPageState extends State<SubjectFormPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final created = await context.read<SubjectsCubit>().createSubject(
-      name: _nameController.text,
-      description: _descriptionController.text,
-    );
+    final cubit = context.read<SubjectsCubit>();
+    final subject = widget.subject;
+    final saved = subject == null
+        ? await cubit.createSubject(
+            name: _nameController.text,
+            description: _descriptionController.text,
+          )
+        : await cubit.updateSubject(
+            subject: subject,
+            name: _nameController.text,
+            description: _descriptionController.text,
+          );
 
-    if (!mounted || !created) return;
+    if (!mounted || !saved) return;
 
     Navigator.of(context).pop();
   }

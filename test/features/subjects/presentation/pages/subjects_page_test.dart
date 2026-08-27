@@ -6,6 +6,7 @@ import 'package:gestao_estudos_flutter/features/subjects/domain/repositories/sub
 import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/create_subject.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/delete_subject.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/get_subjects.dart';
+import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/update_subject.dart';
 import 'package:gestao_estudos_flutter/features/subjects/presentation/cubit/subjects_cubit.dart';
 import 'package:gestao_estudos_flutter/features/subjects/presentation/pages/subjects_page.dart';
 
@@ -19,6 +20,7 @@ void main() {
     cubit = SubjectsCubit(
       getSubjects: GetSubjects(repository),
       createSubjectUseCase: CreateSubject(repository),
+      updateSubjectUseCase: UpdateSubject(repository),
       deleteSubjectUseCase: DeleteSubject(repository),
       generateSubjectId: () => 'subject-created',
       now: () => today,
@@ -111,6 +113,42 @@ void main() {
     expect(find.text('Informe o nome da matéria'), findsOneWidget);
     expect(repository.subjects, isEmpty);
   });
+
+  testWidgets('deve editar matéria pelo formulário preenchido', (tester) async {
+    repository.subjects.add(
+      Subject(
+        id: 'subject-1',
+        name: 'Matemática',
+        description: 'Álgebra básica',
+        createdAt: DateTime(2026, 6, 1),
+      ),
+    );
+    await cubit.loadSubjects();
+    await tester.pumpSubjectsPage(cubit);
+
+    await tester.tap(find.byTooltip('Editar matéria'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar matéria'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Matemática'), findsOneWidget);
+    expect(
+      find.widgetWithText(TextFormField, 'Álgebra básica'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'Matemática avançada',
+    );
+    await tester.enterText(find.byType(TextFormField).last, 'Álgebra linear');
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(repository.subjects.single.name, 'Matemática avançada');
+    expect(repository.subjects.single.description, 'Álgebra linear');
+    expect(repository.subjects.single.updatedAt, today);
+    expect(find.text('Matemática avançada'), findsOneWidget);
+  });
 }
 
 extension on WidgetTester {
@@ -139,5 +177,11 @@ class FakeSubjectRepository implements SubjectRepository {
   @override
   Future<List<Subject>> getSubjects() async {
     return subjects;
+  }
+
+  @override
+  Future<void> updateSubject(Subject subject) async {
+    final index = subjects.indexWhere((item) => item.id == subject.id);
+    subjects[index] = subject;
   }
 }

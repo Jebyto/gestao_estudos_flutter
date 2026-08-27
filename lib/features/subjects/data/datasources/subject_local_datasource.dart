@@ -6,6 +6,7 @@ import '../models/subject_model.dart';
 abstract class SubjectLocalDataSource {
   Future<List<SubjectModel>> getSubjects();
   Future<void> createSubject(SubjectModel subject);
+  Future<void> updateSubject(SubjectModel subject);
   Future<void> deleteSubject(String id);
 }
 
@@ -30,6 +31,18 @@ class SubjectLocalDataSourceImpl implements SubjectLocalDataSource {
       'subjects',
       subject.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  @override
+  Future<void> updateSubject(SubjectModel subject) async {
+    final database = await appDatabase.database;
+
+    await database.update(
+      'subjects',
+      subject.toMap(),
+      where: 'id = ?',
+      whereArgs: [subject.id],
     );
   }
 

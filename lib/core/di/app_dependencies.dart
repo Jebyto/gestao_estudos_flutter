@@ -25,6 +25,7 @@ import '../../features/subjects/domain/repositories/subject_repository.dart';
 import '../../features/subjects/domain/usecases/create_subject.dart';
 import '../../features/subjects/domain/usecases/delete_subject.dart';
 import '../../features/subjects/domain/usecases/get_subjects.dart';
+import '../../features/subjects/domain/usecases/update_subject.dart';
 import '../../features/topics/data/datasources/topic_local_datasource.dart';
 import '../../features/topics/data/repositories/topic_repository_impl.dart';
 import '../../features/topics/domain/repositories/topic_repository.dart';
@@ -49,6 +50,7 @@ class AppDependencies {
   );
   late final CreateSubject createSubject = CreateSubject(subjectRepository);
   late final GetSubjects getSubjects = GetSubjects(subjectRepository);
+  late final UpdateSubject updateSubject = UpdateSubject(subjectRepository);
   late final DeleteSubject deleteSubject = DeleteSubject(subjectRepository);
 
   late final TopicLocalDataSource topicLocalDataSource =

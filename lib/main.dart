@@ -71,6 +71,7 @@ class StudyFlowApp extends StatelessWidget {
           create: (_) => SubjectsCubit(
             getSubjects: dependencies.getSubjects,
             createSubjectUseCase: dependencies.createSubject,
+            updateSubjectUseCase: dependencies.updateSubject,
             deleteSubjectUseCase: dependencies.deleteSubject,
           ),
         ),

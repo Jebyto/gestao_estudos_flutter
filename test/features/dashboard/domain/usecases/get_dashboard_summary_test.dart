@@ -513,6 +513,9 @@ class FakeSubjectRepository implements SubjectRepository {
   }
 
   @override
+  Future<void> updateSubject(Subject subject) async {}
+
+  @override
   Future<void> deleteSubject(String id) async {
     subjects.removeWhere((subject) => subject.id == id);
   }

@@ -26,4 +26,11 @@ class SubjectRepositoryImpl implements SubjectRepository {
 
     return models.map((model) => model.toEntity()).toList();
   }
+
+  @override
+  Future<void> updateSubject(Subject subject) {
+    final model = SubjectModel.fromEntity(subject);
+
+    return localDataSource.updateSubject(model);
+  }
 }

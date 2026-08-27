@@ -48,6 +48,22 @@ void main() {
       expect(subjects.first.name, 'Portuguese');
     });
 
+    test('should update a subject using the local datasource', () async {
+      final subject = Subject(
+        id: 'subject-1',
+        name: 'Advanced Portuguese',
+        createdAt: DateTime(2026, 6, 8),
+        updatedAt: DateTime(2026, 6, 9),
+      );
+
+      await repository.updateSubject(subject);
+
+      expect(localDataSource.updateSubjectWasCalled, isTrue);
+      expect(localDataSource.updatedSubject?.id, subject.id);
+      expect(localDataSource.updatedSubject?.name, subject.name);
+      expect(localDataSource.updatedSubject?.updatedAt, subject.updatedAt);
+    });
+
     test('should delete a subject using the local datasource', () async {
       // Arrange
       localDataSource.subjects.add(
@@ -77,7 +93,9 @@ class FakeSubjectLocalDataSource implements SubjectLocalDataSource {
   final List<SubjectModel> subjects = [];
   bool createSubjectWasCalled = false;
   bool getSubjectsWasCalled = false;
+  bool updateSubjectWasCalled = false;
   bool deleteSubjectWasCalled = false;
+  SubjectModel? updatedSubject;
   String? deletedSubjectId;
 
   @override
@@ -97,5 +115,11 @@ class FakeSubjectLocalDataSource implements SubjectLocalDataSource {
   Future<List<SubjectModel>> getSubjects() async {
     getSubjectsWasCalled = true;
     return subjects;
+  }
+
+  @override
+  Future<void> updateSubject(SubjectModel subject) async {
+    updateSubjectWasCalled = true;
+    updatedSubject = subject;
   }
 }

@@ -127,6 +127,9 @@ class FakeSubjectRepository implements SubjectRepository {
   Future<void> createSubject(Subject subject) async {}
 
   @override
+  Future<void> updateSubject(Subject subject) async {}
+
+  @override
   Future<void> deleteSubject(String id) async {}
 
   @override

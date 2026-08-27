@@ -4,6 +4,7 @@ import 'package:gestao_estudos_flutter/features/subjects/domain/repositories/sub
 import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/create_subject.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/delete_subject.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/get_subjects.dart';
+import 'package:gestao_estudos_flutter/features/subjects/domain/usecases/update_subject.dart';
 import 'package:gestao_estudos_flutter/features/subjects/presentation/cubit/subjects_cubit.dart';
 import 'package:gestao_estudos_flutter/features/subjects/presentation/cubit/subjects_state.dart';
 
@@ -17,6 +18,7 @@ void main() {
     cubit = SubjectsCubit(
       getSubjects: GetSubjects(repository),
       createSubjectUseCase: CreateSubject(repository),
+      updateSubjectUseCase: UpdateSubject(repository),
       deleteSubjectUseCase: DeleteSubject(repository),
       generateSubjectId: () => 'subject-1',
       now: () => today,
@@ -71,6 +73,45 @@ void main() {
     expect(cubit.state.errorMessage, 'Informe o nome da matéria.');
   });
 
+  test('deve editar uma matéria e preservar seus dados imutáveis', () async {
+    final subject = Subject(
+      id: 'subject-1',
+      name: ' Matemática ',
+      description: 'Básica',
+      createdAt: DateTime(2026, 6, 1),
+    );
+    repository.subjects.add(subject);
+
+    final updated = await cubit.updateSubject(
+      subject: subject,
+      name: ' Matemática avançada ',
+      description: ' Álgebra ',
+    );
+
+    expect(updated, isTrue);
+    expect(repository.subjects.single.id, subject.id);
+    expect(repository.subjects.single.name, 'Matemática avançada');
+    expect(repository.subjects.single.description, 'Álgebra');
+    expect(repository.subjects.single.createdAt, subject.createdAt);
+    expect(repository.subjects.single.updatedAt, today);
+    expect(cubit.state.status, SubjectsStatus.success);
+  });
+
+  test('deve rejeitar edição quando o nome estiver vazio', () async {
+    final subject = Subject(
+      id: 'subject-1',
+      name: 'Matemática',
+      createdAt: today,
+    );
+    repository.subjects.add(subject);
+
+    final updated = await cubit.updateSubject(subject: subject, name: '  ');
+
+    expect(updated, isFalse);
+    expect(repository.subjects.single, subject);
+    expect(cubit.state.errorMessage, 'Informe o nome da matéria.');
+  });
+
   test('deve excluir uma matéria e recarregar a lista', () async {
     repository.subjects.add(
       Subject(id: 'subject-1', name: 'História', createdAt: today),
@@ -100,5 +141,11 @@ class FakeSubjectRepository implements SubjectRepository {
   @override
   Future<List<Subject>> getSubjects() async {
     return subjects;
+  }
+
+  @override
+  Future<void> updateSubject(Subject subject) async {
+    final index = subjects.indexWhere((item) => item.id == subject.id);
+    subjects[index] = subject;
   }
 }

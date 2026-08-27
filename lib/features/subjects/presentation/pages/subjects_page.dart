@@ -99,9 +99,23 @@ class _SubjectsBody extends StatelessWidget {
             onTap: onSubjectSelected == null
                 ? null
                 : () => onSubjectSelected!(context, subject),
+            onEdit: () => _openForm(context, subject),
             onDelete: () => _confirmDelete(context, subject.id),
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _openForm(BuildContext context, Subject subject) {
+    final cubit = context.read<SubjectsCubit>();
+
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BlocProvider.value(
+          value: cubit,
+          child: SubjectFormPage(subject: subject),
+        ),
       ),
     );
   }

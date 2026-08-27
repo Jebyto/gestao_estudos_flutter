@@ -4,6 +4,7 @@ import '../../domain/entities/subject.dart';
 import '../../domain/usecases/create_subject.dart';
 import '../../domain/usecases/delete_subject.dart';
 import '../../domain/usecases/get_subjects.dart';
+import '../../domain/usecases/update_subject.dart';
 import 'subjects_state.dart';
 
 typedef SubjectIdGenerator = String Function();
@@ -12,6 +13,7 @@ typedef SubjectDateTimeProvider = DateTime Function();
 class SubjectsCubit extends Cubit<SubjectsState> {
   final GetSubjects getSubjects;
   final CreateSubject createSubjectUseCase;
+  final UpdateSubject updateSubjectUseCase;
   final DeleteSubject deleteSubjectUseCase;
   final SubjectIdGenerator generateSubjectId;
   final SubjectDateTimeProvider now;
@@ -19,6 +21,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
   SubjectsCubit({
     required this.getSubjects,
     required this.createSubjectUseCase,
+    required this.updateSubjectUseCase,
     required this.deleteSubjectUseCase,
     SubjectIdGenerator? generateSubjectId,
     SubjectDateTimeProvider? now,
@@ -106,6 +109,52 @@ class SubjectsCubit extends Cubit<SubjectsState> {
           errorMessage: 'Não foi possível excluir a matéria.',
         ),
       );
+    }
+  }
+
+  Future<bool> updateSubject({
+    required Subject subject,
+    required String name,
+    String? description,
+  }) async {
+    final trimmedName = name.trim();
+    final trimmedDescription = description?.trim();
+
+    if (trimmedName.isEmpty) {
+      emit(
+        state.copyWith(
+          status: SubjectsStatus.failure,
+          errorMessage: 'Informe o nome da matéria.',
+        ),
+      );
+      return false;
+    }
+
+    emit(state.copyWith(status: SubjectsStatus.submitting, errorMessage: null));
+
+    try {
+      await updateSubjectUseCase(
+        Subject(
+          id: subject.id,
+          name: trimmedName,
+          description: trimmedDescription == null || trimmedDescription.isEmpty
+              ? null
+              : trimmedDescription,
+          createdAt: subject.createdAt,
+          updatedAt: now(),
+        ),
+      );
+      await loadSubjects();
+
+      return true;
+    } catch (_) {
+      emit(
+        state.copyWith(
+          status: SubjectsStatus.failure,
+          errorMessage: 'Não foi possível atualizar a matéria.',
+        ),
+      );
+      return false;
     }
   }
 }
