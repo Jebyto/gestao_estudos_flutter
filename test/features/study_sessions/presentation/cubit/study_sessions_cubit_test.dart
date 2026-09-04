@@ -129,4 +129,12 @@ class FakeStudySessionRepository implements StudySessionRepository {
         .where((studySession) => studySession.subjectId == subjectId)
         .toList();
   }
+
+  @override
+  Future<void> updateStudySession(StudySession studySession) async {
+    final index = studySessions.indexWhere(
+      (item) => item.id == studySession.id,
+    );
+    studySessions[index] = studySession;
+  }
 }

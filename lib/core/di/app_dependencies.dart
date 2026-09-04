@@ -19,6 +19,7 @@ import '../../features/study_sessions/domain/usecases/create_study_session.dart'
 import '../../features/study_sessions/domain/usecases/delete_study_session.dart';
 import '../../features/study_sessions/domain/usecases/get_study_sessions.dart';
 import '../../features/study_sessions/domain/usecases/get_study_sessions_by_subject.dart';
+import '../../features/study_sessions/domain/usecases/update_study_session.dart';
 import '../../features/subjects/data/datasources/subject_local_datasource.dart';
 import '../../features/subjects/data/repositories/subject_repository_impl.dart';
 import '../../features/subjects/domain/repositories/subject_repository.dart';
@@ -81,6 +82,9 @@ class AppDependencies {
   );
   late final GetStudySessionsBySubject getStudySessionsBySubject =
       GetStudySessionsBySubject(studySessionRepository);
+  late final UpdateStudySession updateStudySession = UpdateStudySession(
+    studySessionRepository,
+  );
   late final DeleteStudySession deleteStudySession = DeleteStudySession(
     studySessionRepository,
   );

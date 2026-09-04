@@ -10,6 +10,7 @@ import 'package:gestao_estudos_flutter/features/settings/data/repositories/setti
 import 'package:gestao_estudos_flutter/features/settings/domain/entities/theme_preference.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/data/repositories/study_session_repository_impl.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/domain/entities/study_session.dart';
+import 'package:gestao_estudos_flutter/features/study_sessions/domain/usecases/update_study_session.dart';
 import 'package:gestao_estudos_flutter/features/subjects/data/repositories/subject_repository_impl.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/entities/subject.dart';
 import 'package:gestao_estudos_flutter/features/topics/data/repositories/topic_repository_impl.dart';
@@ -47,6 +48,7 @@ void main() {
       dependencies.studySessionRepository,
       isA<StudySessionRepositoryImpl>(),
     );
+    expect(dependencies.updateStudySession, isA<UpdateStudySession>());
     expect(dependencies.reviewRepository, isA<ReviewRepositoryImpl>());
     expect(dependencies.completeReview, isA<CompleteReview>());
     expect(dependencies.getReviewOverview, isA<GetReviewOverview>());
@@ -60,6 +62,36 @@ void main() {
     await dependencies.updateThemePreference(ThemePreference.dark);
 
     expect(await dependencies.getThemePreference(), ThemePreference.dark);
+  });
+
+  test('deve atualizar sessão de estudo usando SQLite real', () async {
+    final subject = Subject(
+      id: 'subject-1',
+      name: 'Banco de Dados',
+      createdAt: today,
+    );
+    final studySession = StudySession(
+      id: 'session-1',
+      subjectId: subject.id,
+      durationInMinutes: 30,
+      studiedAt: DateTime(2026, 6, 28, 9),
+      createdAt: DateTime(2026, 6, 28, 10),
+    );
+    final updatedStudySession = StudySession(
+      id: studySession.id,
+      subjectId: studySession.subjectId,
+      durationInMinutes: 60,
+      studiedAt: DateTime(2026, 6, 29, 9),
+      notes: 'Conteúdo revisado',
+      createdAt: studySession.createdAt,
+      updatedAt: today,
+    );
+    await dependencies.createSubject(subject);
+    await dependencies.createStudySession(studySession);
+
+    await dependencies.updateStudySession(updatedStudySession);
+
+    expect(await dependencies.getStudySessions(), [updatedStudySession]);
   });
 
   test('deve conectar use cases aos repositories SQLite reais', () async {

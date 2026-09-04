@@ -69,6 +69,30 @@ void main() {
       },
     );
 
+    test('should update a study session using the local datasource', () async {
+      final studySession = StudySession(
+        id: 'study-session-1',
+        subjectId: 'subject-1',
+        durationInMinutes: 60,
+        studiedAt: DateTime(2026, 6, 20),
+        createdAt: DateTime(2026, 6, 19, 10),
+        updatedAt: DateTime(2026, 6, 21),
+      );
+
+      await repository.updateStudySession(studySession);
+
+      expect(localDataSource.updateStudySessionWasCalled, isTrue);
+      expect(localDataSource.updatedStudySession?.id, studySession.id);
+      expect(
+        localDataSource.updatedStudySession?.durationInMinutes,
+        studySession.durationInMinutes,
+      );
+      expect(
+        localDataSource.updatedStudySession?.updatedAt,
+        studySession.updatedAt,
+      );
+    });
+
     test('should delete a study session using the local datasource', () async {
       // Arrange
       localDataSource.studySessions.add(
@@ -116,9 +140,11 @@ class FakeStudySessionLocalDataSource implements StudySessionLocalDataSource {
   bool createStudySessionWasCalled = false;
   bool getStudySessionsWasCalled = false;
   bool getStudySessionsBySubjectWasCalled = false;
+  bool updateStudySessionWasCalled = false;
   bool deleteStudySessionWasCalled = false;
   String? receivedSubjectId;
   String? deletedStudySessionId;
+  StudySessionModel? updatedStudySession;
 
   @override
   Future<void> createStudySession(StudySessionModel studySession) async {
@@ -149,5 +175,11 @@ class FakeStudySessionLocalDataSource implements StudySessionLocalDataSource {
     return studySessions
         .where((studySession) => studySession.subjectId == subjectId)
         .toList();
+  }
+
+  @override
+  Future<void> updateStudySession(StudySessionModel studySession) async {
+    updateStudySessionWasCalled = true;
+    updatedStudySession = studySession;
   }
 }

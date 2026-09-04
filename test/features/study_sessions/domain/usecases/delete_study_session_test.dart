@@ -101,6 +101,9 @@ class FakeStudySessionRepository implements StudySessionRepository {
   }
 
   @override
+  Future<void> updateStudySession(StudySession studySession) async {}
+
+  @override
   Future<void> deleteStudySession(String id) async {
     deleteStudySessionWasCalled = true;
     deletedId = id;

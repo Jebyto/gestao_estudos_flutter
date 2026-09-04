@@ -5,6 +5,7 @@ import '../models/study_session_model.dart';
 
 abstract class StudySessionLocalDataSource {
   Future<void> createStudySession(StudySessionModel studySession);
+  Future<void> updateStudySession(StudySessionModel studySession);
   Future<List<StudySessionModel>> getStudySessions();
   Future<List<StudySessionModel>> getStudySessionsBySubject(String subjectId);
   Future<void> deleteStudySession(String id);
@@ -23,6 +24,18 @@ class StudySessionLocalDataSourceImpl implements StudySessionLocalDataSource {
       'study_sessions',
       studySession.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  @override
+  Future<void> updateStudySession(StudySessionModel studySession) async {
+    final database = await appDatabase.database;
+
+    await database.update(
+      'study_sessions',
+      studySession.toMap(),
+      where: 'id = ?',
+      whereArgs: [studySession.id],
     );
   }
 

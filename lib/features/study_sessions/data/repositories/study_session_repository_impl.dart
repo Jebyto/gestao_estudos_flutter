@@ -33,4 +33,11 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
 
     return models.map((model) => model.toEntity()).toList();
   }
+
+  @override
+  Future<void> updateStudySession(StudySession studySession) {
+    final model = StudySessionModel.fromEntity(studySession);
+
+    return localDataSource.updateStudySession(model);
+  }
 }

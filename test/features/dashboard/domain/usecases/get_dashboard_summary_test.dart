@@ -560,6 +560,9 @@ class FakeStudySessionRepository implements StudySessionRepository {
   }
 
   @override
+  Future<void> updateStudySession(StudySession studySession) async {}
+
+  @override
   Future<void> deleteStudySession(String id) async {
     studySessions.removeWhere((studySession) => studySession.id == id);
   }

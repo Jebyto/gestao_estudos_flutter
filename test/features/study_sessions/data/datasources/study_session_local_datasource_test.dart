@@ -120,6 +120,63 @@ void main() {
       ]);
     });
 
+    test('should update a study session in SQLite', () async {
+      await subjectDataSource.createSubject(makeSubject(id: 'subject-1'));
+      await topicDataSource.createTopic(
+        makeTopic(id: 'topic-1', subjectId: 'subject-1'),
+      );
+      final original = makeStudySession(
+        id: 'study-session-1',
+        subjectId: 'subject-1',
+        topicId: 'topic-1',
+      );
+      await studySessionDataSource.createStudySession(original);
+      final updated = StudySessionModel(
+        id: original.id,
+        subjectId: original.subjectId,
+        durationInMinutes: 90,
+        studiedAt: DateTime(2026, 6, 20),
+        notes: 'Updated notes',
+        createdAt: original.createdAt,
+        updatedAt: DateTime(2026, 6, 21),
+      );
+
+      await studySessionDataSource.updateStudySession(updated);
+      final studySessions = await studySessionDataSource.getStudySessions();
+
+      expect(studySessions.single.id, original.id);
+      expect(studySessions.single.subjectId, original.subjectId);
+      expect(studySessions.single.topicId, isNull);
+      expect(studySessions.single.durationInMinutes, 90);
+      expect(studySessions.single.studiedAt, DateTime(2026, 6, 20));
+      expect(studySessions.single.notes, 'Updated notes');
+      expect(studySessions.single.createdAt, original.createdAt);
+      expect(studySessions.single.updatedAt, DateTime(2026, 6, 21));
+    });
+
+    test('should reject update when the topic does not exist', () async {
+      await subjectDataSource.createSubject(makeSubject(id: 'subject-1'));
+      final original = makeStudySession(
+        id: 'study-session-1',
+        subjectId: 'subject-1',
+      );
+      await studySessionDataSource.createStudySession(original);
+      final updated = StudySessionModel(
+        id: original.id,
+        subjectId: original.subjectId,
+        topicId: 'missing-topic',
+        durationInMinutes: original.durationInMinutes,
+        studiedAt: original.studiedAt,
+        createdAt: original.createdAt,
+        updatedAt: DateTime(2026, 6, 21),
+      );
+
+      Future<void> action() =>
+          studySessionDataSource.updateStudySession(updated);
+
+      expect(action, throwsA(isA<DatabaseException>()));
+    });
+
     test('should delete a study session from SQLite', () async {
       // Arrange
       await subjectDataSource.createSubject(makeSubject(id: 'subject-1'));
