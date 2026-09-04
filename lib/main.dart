@@ -151,6 +151,7 @@ class StudyFlowApp extends StatelessWidget {
               subjectId: subject.id,
               getStudySessionsBySubject: dependencies.getStudySessionsBySubject,
               createStudySessionUseCase: dependencies.createStudySession,
+              updateStudySessionUseCase: dependencies.updateStudySession,
               deleteStudySessionUseCase: dependencies.deleteStudySession,
             )..loadStudySessions(),
             child: StudySessionsPage(subject: subject, topics: topics),

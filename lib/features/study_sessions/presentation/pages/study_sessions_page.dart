@@ -102,9 +102,26 @@ class _StudySessionsBody extends StatelessWidget {
           return StudySessionCard(
             studySession: studySession,
             topic: _topicForStudySession(studySession),
+            onEdit: () => _openForm(context, studySession),
             onDelete: () => _confirmDelete(context, studySession),
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _openForm(BuildContext context, StudySession studySession) {
+    final cubit = context.read<StudySessionsCubit>();
+
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BlocProvider.value(
+          value: cubit,
+          child: StudySessionFormPage(
+            topics: topics,
+            studySession: studySession,
+          ),
+        ),
       ),
     );
   }

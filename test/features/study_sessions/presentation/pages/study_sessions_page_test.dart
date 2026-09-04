@@ -6,6 +6,7 @@ import 'package:gestao_estudos_flutter/features/study_sessions/domain/repositori
 import 'package:gestao_estudos_flutter/features/study_sessions/domain/usecases/create_study_session.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/domain/usecases/delete_study_session.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/domain/usecases/get_study_sessions_by_subject.dart';
+import 'package:gestao_estudos_flutter/features/study_sessions/domain/usecases/update_study_session.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/presentation/cubit/study_sessions_cubit.dart';
 import 'package:gestao_estudos_flutter/features/study_sessions/presentation/pages/study_sessions_page.dart';
 import 'package:gestao_estudos_flutter/features/subjects/domain/entities/subject.dart';
@@ -37,6 +38,7 @@ void main() {
       subjectId: subject.id,
       getStudySessionsBySubject: GetStudySessionsBySubject(repository),
       createStudySessionUseCase: CreateStudySession(repository),
+      updateStudySessionUseCase: UpdateStudySession(repository),
       deleteStudySessionUseCase: DeleteStudySession(repository),
       generateStudySessionId: () => 'session-created',
       now: () => today,
@@ -112,6 +114,56 @@ void main() {
 
     expect(find.text('Informe uma duração maior que zero'), findsOneWidget);
     expect(repository.studySessions, isEmpty);
+  });
+
+  testWidgets('deve editar sessão pelo formulário preenchido', (tester) async {
+    final studiedAt = DateTime(2026, 7, 1, 14);
+    final createdAt = DateTime(2026, 6, 30, 10);
+    repository.studySessions.add(
+      StudySession(
+        id: 'session-1',
+        subjectId: subject.id,
+        topicId: 'topic-1',
+        durationInMinutes: 45,
+        studiedAt: studiedAt,
+        notes: 'Exercícios iniciais',
+        createdAt: createdAt,
+      ),
+    );
+    await cubit.loadStudySessions();
+    await tester.pumpStudySessionsPage(cubit, subject, topics);
+
+    await tester.tap(find.byTooltip('Editar sessão'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar sessão'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, '45'), findsOneWidget);
+    expect(
+      find.widgetWithText(TextFormField, 'Exercícios iniciais'),
+      findsOneWidget,
+    );
+    expect(find.text('01/07/2026 14:00'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).first, '90');
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sem tópico').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).last, 'Revisão completa');
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    final updatedSession = repository.studySessions.single;
+    expect(updatedSession.id, 'session-1');
+    expect(updatedSession.subjectId, subject.id);
+    expect(updatedSession.topicId, isNull);
+    expect(updatedSession.durationInMinutes, 90);
+    expect(updatedSession.studiedAt, studiedAt);
+    expect(updatedSession.notes, 'Revisão completa');
+    expect(updatedSession.createdAt, createdAt);
+    expect(updatedSession.updatedAt, today);
+    expect(find.text('1h 30min'), findsOneWidget);
+    expect(find.text('Revisão completa'), findsOneWidget);
   });
 }
 

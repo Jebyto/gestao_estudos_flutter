@@ -3,13 +3,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../topics/domain/entities/topic.dart';
+import '../../domain/entities/study_session.dart';
 import '../cubit/study_sessions_cubit.dart';
 import '../cubit/study_sessions_state.dart';
+import '../widgets/study_session_formatters.dart';
 
 class StudySessionFormPage extends StatefulWidget {
   final List<Topic> topics;
+  final StudySession? studySession;
 
-  const StudySessionFormPage({super.key, required this.topics});
+  const StudySessionFormPage({
+    super.key,
+    required this.topics,
+    this.studySession,
+  });
 
   @override
   State<StudySessionFormPage> createState() => _StudySessionFormPageState();
@@ -20,6 +27,24 @@ class _StudySessionFormPageState extends State<StudySessionFormPage> {
   final _durationController = TextEditingController();
   final _notesController = TextEditingController();
   String _topicId = '';
+  DateTime? _studiedAt;
+
+  bool get _isEditing => widget.studySession != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final studySession = widget.studySession;
+    if (studySession == null) return;
+
+    _durationController.text = studySession.durationInMinutes.toString();
+    _notesController.text = studySession.notes ?? '';
+    _studiedAt = studySession.studiedAt;
+    _topicId = widget.topics.any((topic) => topic.id == studySession.topicId)
+        ? studySession.topicId!
+        : '';
+  }
 
   @override
   void dispose() {
@@ -31,7 +56,7 @@ class _StudySessionFormPageState extends State<StudySessionFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nova sessão')),
+      appBar: AppBar(title: Text(_isEditing ? 'Editar sessão' : 'Nova sessão')),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -87,6 +112,23 @@ class _StudySessionFormPageState extends State<StudySessionFormPage> {
                 },
               ),
               const SizedBox(height: 12),
+              InkWell(
+                onTap: _selectStudiedAt,
+                borderRadius: BorderRadius.circular(4),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Data estudada',
+                    prefixIcon: Icon(Icons.calendar_today_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                  child: Text(
+                    _studiedAt == null
+                        ? 'Hoje'
+                        : formatStudySessionDate(_studiedAt!),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _notesController,
                 minLines: 3,
@@ -123,14 +165,52 @@ class _StudySessionFormPageState extends State<StudySessionFormPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final created = await context.read<StudySessionsCubit>().createStudySession(
-      durationInMinutes: int.parse(_durationController.text),
-      topicId: _topicId,
-      notes: _notesController.text,
-    );
+    final cubit = context.read<StudySessionsCubit>();
+    final studySession = widget.studySession;
+    final saved = studySession == null
+        ? await cubit.createStudySession(
+            durationInMinutes: int.parse(_durationController.text),
+            topicId: _topicId,
+            studiedAt: _studiedAt,
+            notes: _notesController.text,
+          )
+        : await cubit.updateStudySession(
+            studySession: studySession,
+            durationInMinutes: int.parse(_durationController.text),
+            topicId: _topicId,
+            studiedAt: _studiedAt ?? studySession.studiedAt,
+            notes: _notesController.text,
+          );
 
-    if (!mounted || !created) return;
+    if (!mounted || !saved) return;
 
     Navigator.of(context).pop();
+  }
+
+  Future<void> _selectStudiedAt() async {
+    final currentDate = _studiedAt ?? DateTime.now();
+    final now = DateTime.now();
+    final minimumDate = DateTime(2000);
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: currentDate,
+      firstDate: currentDate.isBefore(minimumDate) ? currentDate : minimumDate,
+      lastDate: currentDate.isAfter(now) ? currentDate : now,
+    );
+
+    if (selectedDate == null) return;
+
+    setState(() {
+      _studiedAt = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+        currentDate.hour,
+        currentDate.minute,
+        currentDate.second,
+        currentDate.millisecond,
+        currentDate.microsecond,
+      );
+    });
   }
 }

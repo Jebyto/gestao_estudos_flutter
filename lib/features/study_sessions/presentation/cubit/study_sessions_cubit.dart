@@ -4,6 +4,7 @@ import '../../domain/entities/study_session.dart';
 import '../../domain/usecases/create_study_session.dart';
 import '../../domain/usecases/delete_study_session.dart';
 import '../../domain/usecases/get_study_sessions_by_subject.dart';
+import '../../domain/usecases/update_study_session.dart';
 import 'study_sessions_state.dart';
 
 typedef StudySessionIdGenerator = String Function();
@@ -13,6 +14,7 @@ class StudySessionsCubit extends Cubit<StudySessionsState> {
   final String subjectId;
   final GetStudySessionsBySubject getStudySessionsBySubject;
   final CreateStudySession createStudySessionUseCase;
+  final UpdateStudySession updateStudySessionUseCase;
   final DeleteStudySession deleteStudySessionUseCase;
   final StudySessionIdGenerator generateStudySessionId;
   final StudySessionDateTimeProvider now;
@@ -21,6 +23,7 @@ class StudySessionsCubit extends Cubit<StudySessionsState> {
     required this.subjectId,
     required this.getStudySessionsBySubject,
     required this.createStudySessionUseCase,
+    required this.updateStudySessionUseCase,
     required this.deleteStudySessionUseCase,
     StudySessionIdGenerator? generateStudySessionId,
     StudySessionDateTimeProvider? now,
@@ -130,6 +133,64 @@ class StudySessionsCubit extends Cubit<StudySessionsState> {
           errorMessage: 'Não foi possível excluir a sessão.',
         ),
       );
+    }
+  }
+
+  Future<bool> updateStudySession({
+    required StudySession studySession,
+    required int durationInMinutes,
+    String? topicId,
+    required DateTime studiedAt,
+    String? notes,
+  }) async {
+    final trimmedTopicId = topicId?.trim();
+    final trimmedNotes = notes?.trim();
+
+    if (durationInMinutes <= 0) {
+      emit(
+        state.copyWith(
+          status: StudySessionsStatus.failure,
+          errorMessage: 'Informe uma duração maior que zero.',
+        ),
+      );
+      return false;
+    }
+
+    emit(
+      state.copyWith(
+        status: StudySessionsStatus.submitting,
+        errorMessage: null,
+      ),
+    );
+
+    try {
+      await updateStudySessionUseCase(
+        StudySession(
+          id: studySession.id,
+          subjectId: studySession.subjectId,
+          topicId: trimmedTopicId == null || trimmedTopicId.isEmpty
+              ? null
+              : trimmedTopicId,
+          durationInMinutes: durationInMinutes,
+          studiedAt: studiedAt,
+          notes: trimmedNotes == null || trimmedNotes.isEmpty
+              ? null
+              : trimmedNotes,
+          createdAt: studySession.createdAt,
+          updatedAt: now(),
+        ),
+      );
+      await loadStudySessions();
+
+      return true;
+    } catch (_) {
+      emit(
+        state.copyWith(
+          status: StudySessionsStatus.failure,
+          errorMessage: 'Não foi possível atualizar a sessão.',
+        ),
+      );
+      return false;
     }
   }
 }

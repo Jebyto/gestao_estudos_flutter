@@ -7,12 +7,14 @@ import 'study_session_formatters.dart';
 class StudySessionCard extends StatelessWidget {
   final StudySession studySession;
   final Topic? topic;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const StudySessionCard({
     super.key,
     required this.studySession,
     required this.topic,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -39,6 +41,11 @@ class StudySessionCard extends StatelessWidget {
                     formatStudySessionDuration(studySession.durationInMinutes),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
+                ),
+                IconButton(
+                  tooltip: 'Editar sessão',
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined),
                 ),
                 IconButton(
                   tooltip: 'Excluir sessão',
