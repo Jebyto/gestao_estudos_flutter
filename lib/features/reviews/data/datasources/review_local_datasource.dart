@@ -4,6 +4,7 @@ import '../../../../core/database/app_database.dart';
 import '../models/review_model.dart';
 
 abstract class ReviewLocalDataSource {
+  Future<void> deleteReview(String id);
   Future<void> createReview(ReviewModel review);
   Future<List<ReviewModel>> getReviews();
   Future<ReviewModel?> getReviewById(String id);
@@ -15,6 +16,12 @@ class ReviewLocalDataSourceImpl implements ReviewLocalDataSource {
   final AppDatabase appDatabase;
 
   const ReviewLocalDataSourceImpl(this.appDatabase);
+
+  @override
+  Future<void> deleteReview(String id) async {
+    final database = await appDatabase.database;
+    await database.delete('reviews', where: 'id = ?', whereArgs: [id]);
+  }
 
   @override
   Future<void> createReview(ReviewModel review) async {

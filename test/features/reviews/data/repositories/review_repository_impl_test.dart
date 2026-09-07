@@ -28,6 +28,15 @@ void main() {
       expect(localDataSource.reviews.first.topicId, review.topicId);
     });
 
+    test('deletes the selected review through the datasource', () async {
+      localDataSource.reviews.addAll([
+        makeReviewModel(id: 'pending'),
+        makeReviewModel(id: 'other'),
+      ]);
+      await repository.deleteReview('pending');
+      expect(localDataSource.reviews.single.id, 'other');
+    });
+
     test('should return reviews as domain entities', () async {
       // Arrange
       localDataSource.reviews.add(makeReviewModel(id: 'review-1'));
@@ -136,6 +145,11 @@ ReviewModel makeReviewModel({
 }
 
 class FakeReviewLocalDataSource implements ReviewLocalDataSource {
+  @override
+  Future<void> deleteReview(String id) async {
+    reviews.removeWhere((review) => review.id == id);
+  }
+
   final List<ReviewModel> reviews = [];
   bool createReviewWasCalled = false;
   bool getReviewsWasCalled = false;

@@ -64,6 +64,63 @@ void main() {
     expect(await dependencies.getThemePreference(), ThemePreference.dark);
   });
 
+  test(
+    'reagendamento e cancelamento atualizam dashboard e preservam histórico',
+    () async {
+      await dependencies.createSubject(
+        Subject(id: 'subject-1', name: 'Matematica', createdAt: today),
+      );
+      await dependencies.createTopic(
+        Topic(
+          id: 'topic-1',
+          subjectId: 'subject-1',
+          title: 'Funcoes',
+          status: TopicStatus.review,
+          priority: TopicPriority.high,
+          createdAt: today,
+        ),
+      );
+      final history = Review(
+        id: 'history',
+        topicId: 'topic-1',
+        scheduledFor: today,
+        createdAt: today,
+        reviewedAt: today,
+        quality: ReviewQuality.good,
+      );
+      await dependencies.createReview(history);
+      await dependencies.createReview(
+        Review(
+          id: 'pending',
+          topicId: 'topic-1',
+          scheduledFor: today,
+          createdAt: today,
+        ),
+      );
+      expect((await dependencies.getDashboardSummary()).reviewsDueToday, 1);
+      await dependencies.rescheduleReview(
+        reviewId: 'pending',
+        scheduledFor: today.add(const Duration(days: 3)),
+      );
+      expect((await dependencies.getDashboardSummary()).reviewsDueToday, 0);
+      expect(
+        (await dependencies.getReviewOverview())
+            .pendingReviews
+            .single
+            .review
+            .id,
+        'pending',
+      );
+      await dependencies.cancelReview('pending');
+      expect(await dependencies.getReviewsByTopic('topic-1'), [history]);
+      expect((await dependencies.getReviewOverview()).pendingReviews, isEmpty);
+      expect(
+        (await dependencies.getDashboardSummary()).nextReviewTopicTitle,
+        isNull,
+      );
+    },
+  );
+
   test('deve atualizar sessão de estudo usando SQLite real', () async {
     final subject = Subject(
       id: 'subject-1',

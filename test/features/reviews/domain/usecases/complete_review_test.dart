@@ -165,6 +165,11 @@ Review makeReview({required String id, String topicId = 'topic-1'}) {
 }
 
 class FakeReviewRepository implements ReviewRepository {
+  @override
+  Future<void> deleteReview(String id) async {
+    reviews.removeWhere((review) => review.id == id);
+  }
+
   final List<Review> reviews = [];
   bool createReviewWasCalled = false;
   bool getReviewByIdWasCalled = false;

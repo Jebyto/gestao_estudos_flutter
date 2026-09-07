@@ -9,6 +9,9 @@ class ReviewRepositoryImpl implements ReviewRepository {
   const ReviewRepositoryImpl(this.localDataSource);
 
   @override
+  Future<void> deleteReview(String id) => localDataSource.deleteReview(id);
+
+  @override
   Future<void> createReview(Review review) {
     final model = ReviewModel.fromEntity(review);
 

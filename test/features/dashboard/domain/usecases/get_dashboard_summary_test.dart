@@ -581,6 +581,11 @@ class FakeStudySessionRepository implements StudySessionRepository {
 }
 
 class FakeReviewRepository implements ReviewRepository {
+  @override
+  Future<void> deleteReview(String id) async {
+    reviews.removeWhere((review) => review.id == id);
+  }
+
   final List<Review> reviews = [];
 
   @override

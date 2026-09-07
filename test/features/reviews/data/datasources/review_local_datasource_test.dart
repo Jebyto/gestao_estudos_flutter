@@ -58,6 +58,58 @@ void main() {
       expect(reviews.first.quality, isNull);
     });
 
+    test(
+      'deletes only the selected review and preserves topic and history',
+      () async {
+        await createTopic(id: 'topic-1');
+        final history = makeReview(
+          id: 'history',
+          topicId: 'topic-1',
+          reviewedAt: DateTime(2026, 6, 25),
+          quality: ReviewQuality.good,
+        );
+        await reviewDataSource.createReview(history);
+        await reviewDataSource.createReview(
+          makeReview(id: 'pending', topicId: 'topic-1'),
+        );
+        await reviewDataSource.deleteReview('pending');
+        expect(
+          (await reviewDataSource.getReviews()).single.toEntity(),
+          history.toEntity(),
+        );
+        expect(
+          await topicDataSource.getTopicsBySubject('subject-topic-1'),
+          hasLength(1),
+        );
+      },
+    );
+
+    test(
+      'reschedules in place and persists ISO date without creating a record',
+      () async {
+        await createTopic(id: 'topic-1');
+        await reviewDataSource.createReview(
+          makeReview(id: 'pending', topicId: 'topic-1'),
+        );
+        final date = DateTime(2026, 12, 31, 17, 30);
+        final updated = makeReview(
+          id: 'pending',
+          topicId: 'topic-1',
+          scheduledFor: date,
+        );
+        await reviewDataSource.updateReview(updated);
+        expect(
+          (await reviewDataSource.getReviews()).single.toEntity(),
+          updated.toEntity(),
+        );
+        final db = await appDatabase.database;
+        expect(
+          (await db.query('reviews')).single['scheduled_for'],
+          date.toIso8601String(),
+        );
+      },
+    );
+
     test('should get a review by id', () async {
       // Arrange
       await createTopic(id: 'topic-1');

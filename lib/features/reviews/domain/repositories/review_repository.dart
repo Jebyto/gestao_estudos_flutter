@@ -1,6 +1,7 @@
 import '../entities/review.dart';
 
 abstract class ReviewRepository {
+  Future<void> deleteReview(String id);
   Future<void> createReview(Review review);
   Future<List<Review>> getReviews();
   Future<Review?> getReviewById(String id);

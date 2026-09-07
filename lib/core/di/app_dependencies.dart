@@ -3,6 +3,8 @@ import '../../features/reviews/data/datasources/review_local_datasource.dart';
 import '../../features/reviews/data/repositories/review_repository_impl.dart';
 import '../../features/reviews/domain/repositories/review_repository.dart';
 import '../../features/reviews/domain/usecases/complete_review.dart';
+import '../../features/reviews/domain/usecases/cancel_review.dart';
+import '../../features/reviews/domain/usecases/reschedule_review.dart';
 import '../../features/reviews/domain/usecases/create_review.dart';
 import '../../features/reviews/domain/usecases/get_pending_reviews.dart';
 import '../../features/reviews/domain/usecases/get_review_overview.dart';
@@ -95,6 +97,11 @@ class AppDependencies {
     reviewLocalDataSource,
   );
   late final CreateReview createReview = CreateReview(reviewRepository);
+  late final CancelReview cancelReview = CancelReview(reviewRepository);
+  late final RescheduleReview rescheduleReview = RescheduleReview(
+    reviewRepository,
+    now: now,
+  );
   late final GetPendingReviews getPendingReviews = GetPendingReviews(
     reviewRepository,
   );
