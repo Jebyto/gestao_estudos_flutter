@@ -1,10 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/review.dart';
+import '../../domain/errors/review_exceptions.dart';
+import '../../domain/usecases/cancel_review.dart';
 import '../../domain/usecases/complete_review.dart';
 import '../../domain/usecases/create_review.dart';
-import '../../domain/usecases/get_pending_reviews.dart';
 import '../../domain/usecases/get_reviews_by_topic.dart';
+import '../../domain/usecases/reschedule_review.dart';
 import 'reviews_state.dart';
 
 typedef ReviewPresentationIdGenerator = String Function();
@@ -12,45 +14,85 @@ typedef ReviewDateTimeProvider = DateTime Function();
 
 class ReviewsCubit extends Cubit<ReviewsState> {
   final List<String> topicIds;
-  final GetPendingReviews getPendingReviews;
   final GetReviewsByTopic getReviewsByTopic;
   final CreateReview createReviewUseCase;
   final CompleteReview completeReviewUseCase;
+  final CancelReview cancelReviewUseCase;
+  final RescheduleReview rescheduleReviewUseCase;
   final ReviewPresentationIdGenerator generateReviewId;
   final ReviewDateTimeProvider now;
 
   ReviewsCubit({
     required this.topicIds,
-    required this.getPendingReviews,
     required this.getReviewsByTopic,
     required this.createReviewUseCase,
     required this.completeReviewUseCase,
+    required this.cancelReviewUseCase,
+    required this.rescheduleReviewUseCase,
     ReviewPresentationIdGenerator? generateReviewId,
     ReviewDateTimeProvider? now,
   }) : generateReviewId = generateReviewId ?? _defaultGenerateReviewId,
        now = now ?? DateTime.now,
        super(const ReviewsState());
 
+  Future<void> cancelReview(String reviewId) async {
+    if (state.isSubmitting || state.isLoading) return;
+    emit(state.copyWith(status: ReviewsStatus.submitting, errorMessage: null));
+    try {
+      await cancelReviewUseCase(reviewId);
+      await _loadReviews();
+    } catch (_) {
+      emit(
+        state.copyWith(
+          status: ReviewsStatus.failure,
+          errorMessage: 'Não foi possível cancelar a revisão.',
+        ),
+      );
+    }
+  }
+
+  Future<void> rescheduleReview(String reviewId, DateTime date) async {
+    if (state.isSubmitting || state.isLoading) return;
+    emit(state.copyWith(status: ReviewsStatus.submitting, errorMessage: null));
+    try {
+      await rescheduleReviewUseCase(reviewId: reviewId, scheduledFor: date);
+      await _loadReviews();
+    } catch (error) {
+      emit(
+        state.copyWith(
+          status: ReviewsStatus.failure,
+          errorMessage: error is InvalidReviewScheduleException
+              ? 'Escolha hoje ou uma data futura.'
+              : 'Não foi possível reagendar a revisão.',
+        ),
+      );
+    }
+  }
+
   Future<void> loadReviews() async {
+    if (state.isSubmitting || state.isLoading) return;
+    await _loadReviews();
+  }
+
+  Future<void> _loadReviews() async {
     emit(state.copyWith(status: ReviewsStatus.loading, errorMessage: null));
 
     try {
-      final referenceDate = _endOfDay(now());
-      final pendingReviews = await getPendingReviews(referenceDate);
-      final topicIdsSet = topicIds.toSet();
-      final filteredReviews =
-          pendingReviews
-              .where((review) => topicIdsSet.contains(review.topicId))
-              .toList()
-            ..sort((first, second) {
-              return first.scheduledFor.compareTo(second.scheduledFor);
-            });
-      final completedReviews = await _getCompletedReviews(topicIdsSet);
+      final reviews = <Review>[];
+      for (final topicId in topicIds.toSet()) {
+        reviews.addAll(await getReviewsByTopic(topicId));
+      }
+      final pendingReviews =
+          reviews.where((review) => review.isPending).toList()
+            ..sort((a, b) => a.scheduledFor.compareTo(b.scheduledFor));
+      final completedReviews =
+          reviews.where((review) => review.isCompleted).toList()
+            ..sort((a, b) => b.reviewedAt!.compareTo(a.reviewedAt!));
 
       emit(
         state.copyWith(
           status: ReviewsStatus.success,
-          pendingReviews: filteredReviews,
+          pendingReviews: pendingReviews,
           completedReviews: completedReviews,
           errorMessage: null,
         ),
@@ -66,6 +108,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
   }
 
   Future<bool> createReview({required String topicId}) async {
+    if (state.isSubmitting || state.isLoading) return false;
     final trimmedTopicId = topicId.trim();
 
     if (trimmedTopicId.isEmpty) {
@@ -91,7 +134,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
           createdAt: currentDate,
         ),
       );
-      await loadReviews();
+      await _loadReviews();
 
       return true;
     } catch (_) {
@@ -109,6 +152,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
     required String reviewId,
     required ReviewQuality quality,
   }) async {
+    if (state.isSubmitting || state.isLoading) return;
     emit(state.copyWith(status: ReviewsStatus.submitting, errorMessage: null));
 
     try {
@@ -117,7 +161,7 @@ class ReviewsCubit extends Cubit<ReviewsState> {
         quality: quality,
         reviewedAt: now(),
       );
-      await loadReviews();
+      await _loadReviews();
     } catch (_) {
       emit(
         state.copyWith(
@@ -127,27 +171,6 @@ class ReviewsCubit extends Cubit<ReviewsState> {
       );
     }
   }
-
-  Future<List<Review>> _getCompletedReviews(Set<String> topicIdsSet) async {
-    final completedReviews = <Review>[];
-
-    for (final topicId in topicIdsSet) {
-      final topicReviews = await getReviewsByTopic(topicId);
-      completedReviews.addAll(
-        topicReviews.where((review) => review.isCompleted),
-      );
-    }
-
-    completedReviews.sort((first, second) {
-      return second.reviewedAt!.compareTo(first.reviewedAt!);
-    });
-
-    return completedReviews;
-  }
-}
-
-DateTime _endOfDay(DateTime date) {
-  return DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
 }
 
 String _defaultGenerateReviewId() {

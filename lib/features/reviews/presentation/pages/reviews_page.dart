@@ -37,7 +37,7 @@ class ReviewsPage extends StatelessWidget {
               actions: [
                 IconButton(
                   tooltip: 'Atualizar revisões',
-                  onPressed: state.isLoading
+                  onPressed: state.isLoading || state.isSubmitting
                       ? null
                       : () => context.read<ReviewsCubit>().loadReviews(),
                   icon: const Icon(Icons.refresh),
@@ -60,7 +60,9 @@ class ReviewsPage extends StatelessWidget {
             ),
             floatingActionButton: FloatingActionButton(
               tooltip: 'Adicionar revisão',
-              onPressed: topics.isEmpty ? null : () => _openForm(context),
+              onPressed: topics.isEmpty || state.isLoading || state.isSubmitting
+                  ? null
+                  : () => _openForm(context),
               child: const Icon(Icons.add),
             ),
           ),
@@ -111,6 +113,12 @@ class _PendingReviewsView extends StatelessWidget {
           return ReviewCard(
             review: review,
             topic: _topicForReview(review, topics),
+            referenceDate: context.read<ReviewsCubit>().now(),
+            isBusy: state.isSubmitting || state.isLoading,
+            onCancel: () =>
+                context.read<ReviewsCubit>().cancelReview(review.id),
+            onReschedule: (date) =>
+                context.read<ReviewsCubit>().rescheduleReview(review.id, date),
             onComplete: (quality) => context
                 .read<ReviewsCubit>()
                 .completeReview(reviewId: review.id, quality: quality),

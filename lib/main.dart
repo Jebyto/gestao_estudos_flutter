@@ -126,6 +126,8 @@ class StudyFlowApp extends StatelessWidget {
             create: (_) => ReviewOverviewCubit(
               getReviewOverview: dependencies.getReviewOverview,
               completeReviewUseCase: dependencies.completeReview,
+              cancelReviewUseCase: dependencies.cancelReview,
+              rescheduleReviewUseCase: dependencies.rescheduleReview,
             )..loadOverview(),
             child: const ReviewOverviewPage(),
           );
@@ -168,10 +170,11 @@ class StudyFlowApp extends StatelessWidget {
           return BlocProvider(
             create: (_) => ReviewsCubit(
               topicIds: topics.map((topic) => topic.id).toList(),
-              getPendingReviews: dependencies.getPendingReviews,
               getReviewsByTopic: dependencies.getReviewsByTopic,
               createReviewUseCase: dependencies.createReview,
               completeReviewUseCase: dependencies.completeReview,
+              cancelReviewUseCase: dependencies.cancelReview,
+              rescheduleReviewUseCase: dependencies.rescheduleReview,
             )..loadReviews(),
             child: ReviewsPage(subject: subject, topics: topics),
           );

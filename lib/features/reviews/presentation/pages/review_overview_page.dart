@@ -31,7 +31,7 @@ class ReviewOverviewPage extends StatelessWidget {
               actions: [
                 IconButton(
                   tooltip: 'Atualizar revisões',
-                  onPressed: state.isLoading
+                  onPressed: state.isLoading || state.isSubmitting
                       ? null
                       : () =>
                             context.read<ReviewOverviewCubit>().loadOverview(),
@@ -89,6 +89,13 @@ class _PendingReviewsView extends StatelessWidget {
           review: item.review,
           topic: item.topic,
           subjectName: item.subject.name,
+          referenceDate: context.read<ReviewOverviewCubit>().now(),
+          isBusy: state.isSubmitting || state.isLoading,
+          onCancel: () =>
+              context.read<ReviewOverviewCubit>().cancelReview(item.review.id),
+          onReschedule: (date) => context
+              .read<ReviewOverviewCubit>()
+              .rescheduleReview(item.review.id, date),
           onComplete: (quality) => context
               .read<ReviewOverviewCubit>()
               .completeReview(reviewId: item.review.id, quality: quality),

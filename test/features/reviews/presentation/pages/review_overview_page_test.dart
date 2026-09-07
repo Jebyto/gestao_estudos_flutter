@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/entities/review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/repositories/review_repository.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/complete_review.dart';
+import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/cancel_review.dart';
+import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/reschedule_review.dart';
 import 'package:gestao_estudos_flutter/features/reviews/domain/usecases/get_review_overview.dart';
 import 'package:gestao_estudos_flutter/features/reviews/presentation/cubit/review_overview_cubit.dart';
 import 'package:gestao_estudos_flutter/features/reviews/presentation/pages/review_overview_page.dart';
@@ -46,12 +48,109 @@ void main() {
         reviewRepository,
         generateReviewId: () => 'review-next',
       ),
+      cancelReviewUseCase: CancelReview(reviewRepository),
+      rescheduleReviewUseCase: RescheduleReview(
+        reviewRepository,
+        now: () => today,
+      ),
       now: () => today,
     );
   });
 
   tearDown(() async {
     await cubit.close();
+  });
+
+  testWidgets('cancelamento exige confirmação e preserva histórico', (
+    tester,
+  ) async {
+    final pending = Review(
+      id: 'pending',
+      topicId: 'topic-1',
+      scheduledFor: today.add(const Duration(days: 7)),
+      createdAt: today,
+    );
+    final history = Review(
+      id: 'history',
+      topicId: 'topic-1',
+      scheduledFor: today,
+      reviewedAt: today,
+      quality: ReviewQuality.good,
+      createdAt: today,
+    );
+    reviewRepository.reviews.addAll([pending, history]);
+    await cubit.loadOverview();
+    await tester.pumpOverviewPage(cubit);
+    await tester.tap(find.byTooltip('Cancelar revisão'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Voltar'));
+    await tester.pumpAndSettle();
+    expect(reviewRepository.reviews, [pending, history]);
+    await tester.tap(find.byTooltip('Cancelar revisão'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Cancelar revisão'));
+    await tester.pumpAndSettle();
+    expect(reviewRepository.reviews, [history]);
+    expect(find.text('Nenhuma revisão pendente'), findsOneWidget);
+    await tester.tap(find.text('Histórico'));
+    await tester.pumpAndSettle();
+    expect(find.text('Qualidade: Boa'), findsOneWidget);
+    expect(find.byTooltip('Cancelar revisão'), findsNothing);
+    expect(find.byTooltip('Reagendar revisão'), findsNothing);
+  });
+
+  testWidgets('reagenda no calendário e mantém a pendência acessível', (
+    tester,
+  ) async {
+    final pending = Review(
+      id: 'pending',
+      topicId: 'topic-1',
+      scheduledFor: today,
+      createdAt: today,
+    );
+    reviewRepository.reviews.add(pending);
+    await cubit.loadOverview();
+    await tester.pumpOverviewPage(cubit);
+    await tester.tap(find.byTooltip('Reagendar revisão'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Voltar'));
+    await tester.pumpAndSettle();
+    expect(reviewRepository.reviews, [pending]);
+    await tester.tap(find.byTooltip('Reagendar revisão'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('20'));
+    await tester.tap(find.text('Reagendar'));
+    await tester.pumpAndSettle();
+    expect(reviewRepository.reviews.single.id, pending.id);
+    expect(reviewRepository.reviews.single.scheduledFor, DateTime(2026, 7, 20));
+    expect(find.text('Agendada para 20/07/2026'), findsOneWidget);
+    expect(find.byTooltip('Cancelar revisão'), findsOneWidget);
+  });
+
+  testWidgets('exibe falha e permite repetir cancelamento', (tester) async {
+    reviewRepository.reviews.add(
+      Review(
+        id: 'pending',
+        topicId: 'topic-1',
+        scheduledFor: today,
+        createdAt: today,
+      ),
+    );
+    await cubit.loadOverview();
+    await tester.pumpOverviewPage(cubit);
+    reviewRepository.failDelete = true;
+    await tester.tap(find.byTooltip('Cancelar revisão'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Cancelar revisão'));
+    await tester.pumpAndSettle();
+    expect(find.text('Não foi possível cancelar a revisão.'), findsOneWidget);
+    expect(reviewRepository.reviews, hasLength(1));
+    reviewRepository.failDelete = false;
+    await tester.tap(find.byTooltip('Cancelar revisão'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Cancelar revisão'));
+    await tester.pumpAndSettle();
+    expect(reviewRepository.reviews, isEmpty);
   });
 
   testWidgets('deve exibir estado vazio das revisões globais', (tester) async {
@@ -158,8 +257,10 @@ class FakeTopicRepository implements TopicRepository {
 }
 
 class FakeReviewRepository implements ReviewRepository {
+  bool failDelete = false;
   @override
   Future<void> deleteReview(String id) async {
+    if (failDelete) throw StateError('write failed');
     reviews.removeWhere((review) => review.id == id);
   }
 
