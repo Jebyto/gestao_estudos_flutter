@@ -5,8 +5,9 @@ import '../models/topic_model.dart';
 
 class TopicRepositoryImpl implements TopicRepository {
   final TopicLocalDataSource localDataSource;
+  final Future<void> Function()? onDeleted;
 
-  const TopicRepositoryImpl(this.localDataSource);
+  const TopicRepositoryImpl(this.localDataSource, {this.onDeleted});
 
   @override
   Future<void> createTopic(Topic topic) {
@@ -16,8 +17,9 @@ class TopicRepositoryImpl implements TopicRepository {
   }
 
   @override
-  Future<void> deleteTopic(String id) {
-    return localDataSource.deleteTopic(id);
+  Future<void> deleteTopic(String id) async {
+    await localDataSource.deleteTopic(id);
+    await onDeleted?.call();
   }
 
   @override

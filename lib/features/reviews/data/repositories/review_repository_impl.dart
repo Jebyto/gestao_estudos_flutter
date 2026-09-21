@@ -5,17 +5,22 @@ import '../models/review_model.dart';
 
 class ReviewRepositoryImpl implements ReviewRepository {
   final ReviewLocalDataSource localDataSource;
+  final Future<void> Function()? onChanged;
 
-  const ReviewRepositoryImpl(this.localDataSource);
-
-  @override
-  Future<void> deleteReview(String id) => localDataSource.deleteReview(id);
+  const ReviewRepositoryImpl(this.localDataSource, {this.onChanged});
 
   @override
-  Future<void> createReview(Review review) {
+  Future<void> deleteReview(String id) async {
+    await localDataSource.deleteReview(id);
+    await onChanged?.call();
+  }
+
+  @override
+  Future<void> createReview(Review review) async {
     final model = ReviewModel.fromEntity(review);
 
-    return localDataSource.createReview(model);
+    await localDataSource.createReview(model);
+    await onChanged?.call();
   }
 
   @override
@@ -40,9 +45,10 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
-  Future<void> updateReview(Review review) {
+  Future<void> updateReview(Review review) async {
     final model = ReviewModel.fromEntity(review);
 
-    return localDataSource.updateReview(model);
+    await localDataSource.updateReview(model);
+    await onChanged?.call();
   }
 }

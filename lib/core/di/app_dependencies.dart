@@ -1,4 +1,9 @@
 import '../../features/dashboard/domain/usecases/get_dashboard_summary.dart';
+import '../../features/reminders/data/datasources/reminder_preferences_local_datasource.dart';
+import '../../features/reminders/data/gateways/local_reminder_gateway.dart';
+import '../../features/reminders/data/repositories/reminder_preferences_repository_impl.dart';
+import '../../features/reminders/domain/repositories/reminder_gateway.dart';
+import '../../features/reminders/domain/services/review_reminder_manager.dart';
 import '../../features/reviews/data/datasources/review_local_datasource.dart';
 import '../../features/reviews/data/repositories/review_repository_impl.dart';
 import '../../features/reviews/domain/repositories/review_repository.dart';
@@ -43,14 +48,30 @@ class AppDependencies {
   final AppDatabase appDatabase;
   final DateTimeProvider? now;
   final ReviewIdGenerator? generateReviewId;
+  final ReminderGateway reminderGateway;
 
-  AppDependencies({AppDatabase? appDatabase, this.now, this.generateReviewId})
-    : appDatabase = appDatabase ?? AppDatabase();
+  AppDependencies({
+    AppDatabase? appDatabase,
+    this.now,
+    this.generateReviewId,
+    ReminderGateway? reminderGateway,
+  }) : appDatabase = appDatabase ?? AppDatabase(),
+       reminderGateway = reminderGateway ?? LocalReminderGateway();
+
+  late final ReviewReminderManager reviewReminders = ReviewReminderManager(
+    reviews: reviewRepository,
+    preferences: ReminderPreferencesRepositoryImpl(
+      ReminderPreferencesLocalDataSourceImpl(appDatabase),
+    ),
+    gateway: reminderGateway,
+    now: now,
+  );
 
   late final SubjectLocalDataSource subjectLocalDataSource =
       SubjectLocalDataSourceImpl(appDatabase);
   late final SubjectRepository subjectRepository = SubjectRepositoryImpl(
     subjectLocalDataSource,
+    onDeleted: () => reviewReminders.synchronize(),
   );
   late final CreateSubject createSubject = CreateSubject(subjectRepository);
   late final GetSubjects getSubjects = GetSubjects(subjectRepository);
@@ -61,6 +82,7 @@ class AppDependencies {
       TopicLocalDataSourceImpl(appDatabase);
   late final TopicRepository topicRepository = TopicRepositoryImpl(
     topicLocalDataSource,
+    onDeleted: () => reviewReminders.synchronize(),
   );
   late final CreateTopic createTopic = CreateTopic(topicRepository);
   late final GetTopicsBySubject getTopicsBySubject = GetTopicsBySubject(
@@ -95,6 +117,7 @@ class AppDependencies {
       ReviewLocalDataSourceImpl(appDatabase);
   late final ReviewRepository reviewRepository = ReviewRepositoryImpl(
     reviewLocalDataSource,
+    onChanged: () => reviewReminders.synchronize(),
   );
   late final CreateReview createReview = CreateReview(reviewRepository);
   late final CancelReview cancelReview = CancelReview(reviewRepository);
@@ -137,7 +160,8 @@ class AppDependencies {
   late final UpdateThemePreference updateThemePreference =
       UpdateThemePreference(settingsRepository);
 
-  Future<void> close() {
-    return appDatabase.close();
+  Future<void> close() async {
+    await reviewReminders.close();
+    await appDatabase.close();
   }
 }

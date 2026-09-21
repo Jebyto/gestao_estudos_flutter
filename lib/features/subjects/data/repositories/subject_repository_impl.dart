@@ -5,8 +5,9 @@ import '../models/subject_model.dart';
 
 class SubjectRepositoryImpl implements SubjectRepository {
   final SubjectLocalDataSource localDataSource;
+  final Future<void> Function()? onDeleted;
 
-  const SubjectRepositoryImpl(this.localDataSource);
+  const SubjectRepositoryImpl(this.localDataSource, {this.onDeleted});
 
   @override
   Future<void> createSubject(Subject subject) {
@@ -16,8 +17,9 @@ class SubjectRepositoryImpl implements SubjectRepository {
   }
 
   @override
-  Future<void> deleteSubject(String id) {
-    return localDataSource.deleteSubject(id);
+  Future<void> deleteSubject(String id) async {
+    await localDataSource.deleteSubject(id);
+    await onDeleted?.call();
   }
 
   @override
