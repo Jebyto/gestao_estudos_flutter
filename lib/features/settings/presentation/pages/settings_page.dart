@@ -6,7 +6,8 @@ import '../cubit/settings_cubit.dart';
 import '../cubit/settings_state.dart';
 
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+  final Widget? reminders;
+  const SettingsPage({super.key, this.reminders});
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +67,7 @@ class SettingsPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   const LinearProgressIndicator(),
                 ],
+                ?reminders,
               ],
             ),
           ),

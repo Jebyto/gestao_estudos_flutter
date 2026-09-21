@@ -5,6 +5,9 @@ import 'core/di/app_dependencies.dart';
 import 'core/navigation/study_flow_home.dart';
 import 'features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
+import 'features/reminders/presentation/cubit/reminders_cubit.dart';
+import 'features/reminders/presentation/widgets/reminder_lifecycle.dart';
+import 'features/reminders/presentation/widgets/reminder_settings.dart';
 import 'features/reviews/presentation/cubit/review_overview_cubit.dart';
 import 'features/reviews/presentation/cubit/reviews_cubit.dart';
 import 'features/reviews/presentation/pages/review_overview_page.dart';
@@ -63,6 +66,9 @@ class StudyFlowApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
+          create: (_) => RemindersCubit(dependencies.reviewReminders),
+        ),
+        BlocProvider(
           create: (_) => DashboardCubit(
             getDashboardSummary: dependencies.getDashboardSummary.call,
           )..loadSummary(),
@@ -78,16 +84,18 @@ class StudyFlowApp extends StatelessWidget {
       ],
       child: Builder(
         builder: (context) {
-          return StudyFlowHome(
-            dashboard: DashboardPage(onOpenReviews: _openReviewOverview),
-            subjects: SubjectsPage(onSubjectSelected: _openTopics),
-            settings: const SettingsPage(),
-            onDashboardSelected: () {
-              context.read<DashboardCubit>().loadSummary();
-            },
-            onSubjectsSelected: () {
-              context.read<SubjectsCubit>().loadSubjects();
-            },
+          return ReminderLifecycle(
+            child: StudyFlowHome(
+              dashboard: DashboardPage(onOpenReviews: _openReviewOverview),
+              subjects: SubjectsPage(onSubjectSelected: _openTopics),
+              settings: const SettingsPage(reminders: ReminderSettings()),
+              onDashboardSelected: () {
+                context.read<DashboardCubit>().loadSummary();
+              },
+              onSubjectsSelected: () {
+                context.read<SubjectsCubit>().loadSubjects();
+              },
+            ),
           );
         },
       ),
